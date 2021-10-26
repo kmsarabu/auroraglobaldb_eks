@@ -1,0 +1,33 @@
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: eksgdbclu
+  region: us-east-2
+  version: "1.20"
+vpc:
+  id: vpc-0f51e2df1f758188a
+  subnets:
+    private:
+       use2-az1: { id: subnet-0cc89c1140b2fc7f4 }
+       use2-az2: { id: subnet-07de6c286ce60c37c }
+       use2-az3: { id: subnet-01ba2f1133c3cbdac }
+managedNodeGroups:
+  - name: eksgdb-1-workers
+    minSize: 2
+    maxSize: 3
+    desiredCapacity: 2
+    instanceType: t3.large
+    labels: {role: worker}
+    privateNetworking: true
+    ssh:
+      enableSsm: true
+    tags:
+      nodegroup-role: worker
+    iam:
+      withAddonPolicies:
+        externalDNS: true
+        certManager: true
+        albIngress: true
+secretsEncryption:
+  keyARN: arn:aws:kms:us-east-2:330415500030:key/f4386af0-e80e-4ba4-9bae-9c808509ae52
