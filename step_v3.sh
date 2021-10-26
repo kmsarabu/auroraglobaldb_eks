@@ -30,3 +30,6 @@ export MASTER_ARN=$(aws kms describe-key --key-id alias/adbtest9 --query KeyMeta
 
 echo "export MASTER_ARN=${MASTER_ARN}" | tee -a ~/.bash_profile
 
+aws sts get-caller-identity --query Arn | grep $iamrole -q && echo "IAM role valid" || echo "IAM role NOT valid"
+
+
