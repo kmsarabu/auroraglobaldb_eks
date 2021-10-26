@@ -1,6 +1,6 @@
 #!/bin/bash
 
-vpcid=$(aws cloudformation describe-stacks --stack-name EKSGDBR --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
+vpcid=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
 
 rm -f eksauroragdb.yaml
 
@@ -10,15 +10,15 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
   name: eksgdbclu
-  region: us-east-2
-  version: "1.20"
+  region: ${AWS_REGION}
+  version: "1.21"
 vpc:
   id: ${vpcid}
   subnets:
     private:
 EOF
 
-aws ec2 describe-subnets --filters Name=vpc-id,Values=vpc-0f51e2df1f758188a --region us-east-2 --query 'Subnets[?(! MapPublicIpOnLaunch && VpcId == `vpc-0f51e2df1f758188a`)].{AvailabilityZoneId:AvailabilityZoneId, SubnetId:SubnetId}' --output text | while read az subnet
+aws ec2 describe-subnets --filters Name=vpc-id,Values=${vpcid} --query 'Subnets[?(! MapPublicIpOnLaunch)].{AvailabilityZoneId:AvailabilityZoneId,SubnetId:SubnetId}' --output text | while read az subnet
 do
  echo "       ${az}: { id: ${subnet} }" >> eksauroragdb.yaml
 done
@@ -45,6 +45,12 @@ secretsEncryption:
   keyARN: ${MASTER_ARN}
 EOF
 
+keyid=$AWS_ACCESS_KEY_ID
+skey=$AWS_SECRET_ACCESS_KEY
+defreg=$AWS_DEFAULT_REGION
+
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
+
 eksctl create cluster -f eksauroragdb.yaml
 
 STACK_NAME=$(eksctl get nodegroup --cluster eksgdbclu -o json | jq -r '.[].StackName')
@@ -63,3 +69,6 @@ fi
 
 eksctl create iamidentitymapping --cluster eksgdbclu --arn ${rolearn} --group system:masters --username admin
 
+export AWS_ACCESS_KEY_ID=$keyid
+export AWS_SECRET_ACCESS_KEY=$skey
+export AWS_DEFAULT_REGION=$defreg

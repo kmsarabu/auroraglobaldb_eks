@@ -4,12 +4,6 @@ iamrole=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stack
 vpcid=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
 instid=$(aws ec2 describe-instances --filters Name=vpc-id,Values=${vpcid} --query 'Reservations[].Instances[].InstanceId' --output text)
 
-aws iam create-instance-profile --instance-profile-name cloud9InstanceProfile
-
-aws iam add-role-to-instance-profile --role-name ${iamrole} --instance-profile-name cloud9InstanceProfile
-
-sleep 30
-
 aws ec2 associate-iam-instance-profile --iam-instance-profile Name=cloud9InstanceProfile --instance-id ${instid}
 
 rm -vf ${HOME}/.aws/credentials
@@ -30,6 +24,15 @@ export MASTER_ARN=$(aws kms describe-key --key-id alias/adbtest9 --query KeyMeta
 
 echo "export MASTER_ARN=${MASTER_ARN}" | tee -a ~/.bash_profile
 
+keyid=$AWS_ACCESS_KEY_ID
+skey=$AWS_SECRET_ACCESS_KEY
+defreg=$AWS_DEFAULT_REGION
+
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
+
 aws sts get-caller-identity --query Arn | grep $iamrole -q && echo "IAM role valid" || echo "IAM role NOT valid"
 
+export AWS_ACCESS_KEY_ID=$keyid
+export AWS_SECRET_ACCESS_KEY=$skey
+export AWS_DEFAULT_REGION=$defreg
 
