@@ -72,3 +72,77 @@ eksctl create iamidentitymapping --cluster eksgdbclu --arn ${rolearn} --group sy
 export AWS_ACCESS_KEY_ID=$keyid
 export AWS_SECRET_ACCESS_KEY=$skey
 export AWS_DEFAULT_REGION=$defreg
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.5.1/components.yaml
+kubectl get apiservice v1beta1.metrics.k8s.io -o json | jq '.status'
+
+# we need the ASG name
+export ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[? Tags[? (Key=='eks:cluster-name') && Value=='eksgdbclu']].AutoScalingGroupName" --output text)
+
+# increase max capacity up to 4
+aws autoscaling \
+    update-auto-scaling-group \
+    --auto-scaling-group-name ${ASG_NAME} \
+    --min-size 2 \
+    --desired-capacity 2 \
+    --max-size 4
+
+# Check new values
+aws autoscaling \
+    describe-auto-scaling-groups \
+    --query "AutoScalingGroups[? Tags[? (Key=='eks:cluster-name') && Value=='eksgdbclu']].[AutoScalingGroupName, MinSize, MaxSize,DesiredCapacity]" \
+    --output table
+
+eksctl utils associate-iam-oidc-provider \
+    --cluster eksgdbclu \
+    --approve
+
+mkdir ~/environment/cluster-autoscaler
+
+cat <<EoF > ~/environment/cluster-autoscaler/k8s-asg-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeTags",
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "ec2:DescribeLaunchTemplateVersions"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        }
+    ]
+}
+EoF
+
+aws iam create-policy   \
+  --policy-name k8s-asg-policy \
+  --policy-document file://~/environment/cluster-autoscaler/k8s-asg-policy.json
+
+eksctl create iamserviceaccount \
+    --name cluster-autoscaler \
+    --namespace kube-system \
+    --cluster eksgdbclu \
+    --attach-policy-arn "arn:aws:iam::${ACCOUNT_ID}:policy/k8s-asg-policy" \
+    --approve \
+    --override-existing-serviceaccounts
+
+kubectl -n kube-system describe sa cluster-autoscaler
+
+kubectl apply -f https://www.eksworkshop.com/beginner/080_scaling/deploy_ca.files/cluster-autoscaler-autodiscover.yaml
+
+# we need to retrieve the latest docker image available for our EKS version
+export K8S_VERSION=$(kubectl version --short | grep 'Server Version:' | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' | cut -d. -f1,2)
+export AUTOSCALER_VERSION=$(curl -s "https://api.github.com/repos/kubernetes/autoscaler/releases" | grep '"tag_name":' | sed -s 's/.*-\([0-9][0-9\.]*\).*/\1/' | grep -m1 ${K8S_VERSION})
+
+kubectl -n kube-system \
+    set image deployment.apps/cluster-autoscaler \
+    cluster-autoscaler=us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${AUTOSCALER_VERSION}
+
+#kubectl -n kube-system logs -f deployment/cluster-autoscaler
+

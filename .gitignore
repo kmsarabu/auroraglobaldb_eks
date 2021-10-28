@@ -3,3 +3,7 @@
 *.pxt
 *.uxp
 *.uxt
+*.pyc
+__pycache__
+load_replica.py
+*.swp
