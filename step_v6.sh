@@ -15,10 +15,15 @@ aws iam create-policy \
 eksctl create iamserviceaccount \
   --cluster eksgdbclu \
   --namespace kube-system \
+  --region $AWS_REGION \
   --name aws-load-balancer-controller \
   --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/AWSLoadBalancerControllerIAMPolicy \
   --override-existing-serviceaccounts \
   --approve
+if [[ $? -ne 0 ]]; then
+ echo "failed to setup service acccount, pls fix and retry"
+ exit 1
+fi
 
 kubectl apply -k github.com/aws/eks-charts/stable/aws-load-balancer-controller/crds?ref=master
 
@@ -32,7 +37,7 @@ helm upgrade -i aws-load-balancer-controller \
     --set clusterName=eksgdbclu \
     --set serviceAccount.create=false \
     --set serviceAccount.name=aws-load-balancer-controller \
-    --set image.tag="${LBC_VERSION}"
+    --set image.tag="v2.3.0"
 
 kubectl -n kube-system rollout status deployment aws-load-balancer-controller
 
