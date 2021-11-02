@@ -134,9 +134,9 @@ ALTER TABLE dbschema.kart OWNER TO dbuser1;
 CREATE TABLE dbschema.order_details (
     order_id integer NOT NULL,
     item_id integer NOT NULL,
-    category text NOT NULL,
     qty integer,
-    total numeric
+    total numeric,
+    unit_price numeric
 );
 
 
@@ -150,7 +150,8 @@ CREATE TABLE dbschema.orders (
     order_id integer NOT NULL,
     customer_id integer,
     order_date date,
-    order_total numeric
+    order_total numeric,
+    email text
 );
 
 
@@ -198,14 +199,22 @@ CREATE SEQUENCE dbschema.users_id_seq
     NO MAXVALUE
     CACHE 1;
 
+CREATE SEQUENCE dbschema.order_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
-ALTER TABLE dbschema.users_id_seq OWNER TO dbuser1;
+ALTER TABLE dbschema.order_seq OWNER TO dbuser1;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: dbschema; Owner: dbuser1
 --
 
 ALTER SEQUENCE dbschema.users_id_seq OWNED BY dbschema.users.id;
+ALTER SEQUENCE dbschema.order_seq OWNED BY dbschema.orders.order_id;
 
 
 --
