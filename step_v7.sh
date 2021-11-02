@@ -39,6 +39,6 @@ roendpoint=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key ==
 ENCODEDVALUE=$(echo -n $roendpoint | base64 --wrap=0)
 
 sed -i "s/EFS_VOLUME_ID/$FILE_SYSTEM_ID/g" retailapp/eks/octank_app-${AWS_REGION}.yml
-
+sed -i "s/EFS_VOLUME_ID/$FILE_SYSTEM_ID/g" cleanup.sh
 sed -i "s/ROENDPOINT/$ENCODEDVALUE/g" retailapp/eks/octank_app-${AWS_REGION}.yml
 
