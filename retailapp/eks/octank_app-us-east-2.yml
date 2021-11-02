@@ -71,6 +71,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
+          - name: DATABASE_RO_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -142,6 +147,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
+          - name: DATABASE_RO_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -213,6 +223,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
+          - name: DATABASE_RO_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -283,6 +298,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
+          - name: DATABASE_RO_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -384,6 +404,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
+          - name: DATABASE_RO_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
