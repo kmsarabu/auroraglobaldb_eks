@@ -48,35 +48,35 @@ class Product:
         with connect("reader") as dbconn:
             sqlstmt = """
                       with items as (
-                      select item_id, category
+                      select item_id
                       from (
-                       select item_id, category, cnt, 
-                              rank() over (partition by category order by cnt desc) mrank
+                       select item_id, cnt, 
+                              rank() over (order by cnt desc) mrank
                        from (
-                        select item_id, category, count(1) as cnt
+                        select item_id, count(1) as cnt
                         from orders a join order_details b 
                          on a.order_id = b.order_id and a.order_date >= now() - interval '{0}' day
-                        group by item_id, category
+                        group by item_id
                         ) t
                        ) t where mrank <= {1} order by cnt desc
                       )
                       SELECT id,name,price, description,img_url,'apparels' as category, count(1) review_cnt, round(avg(rating)*20) rating
-                      FROM apparels a join items i on i.item_id = a.id and i.category='apparels'
+                      FROM apparels a join items i on i.item_id = a.id 
                        left outer join reviews r on r.category='apparels' and i.item_id = r.item_id
                       GROUP BY id,name,price, description,img_url
                       UNION
                       SELECT id,name,price, description,img_url,'fashion' as category, count(1) review_cnt, round(avg(rating)*20) rating
-                      FROM fashion a join items i on i.item_id = a.id and i.category='fashion'
+                      FROM fashion a join items i on i.item_id = a.id 
                        left outer join reviews r on r.category='fashion' and i.item_id = r.item_id
                       GROUP BY id,name,price, description,img_url
                       UNION
                       SELECT id,name, price, description,img_url,'bicycles' as category, count(1) review_cnt, round(avg(rating)*20) rating
-                      FROM bicycles a join items i on i.item_id = a.id and i.category='bicycles'
+                      FROM bicycles a join items i on i.item_id = a.id 
                        left outer join reviews r on r.category='bicycles' and i.item_id = r.item_id
                       GROUP BY id,name,price, description,img_url
                       UNION
                       SELECT id,name, price, description,img_url,'jewelry' as category, count(1) review_cnt, round(avg(rating)*20) rating
-                       FROM jewelry a join items i on i.item_id = a.id and i.category='jewelry'
+                       FROM jewelry a join items i on i.item_id = a.id 
                        left outer join reviews r on r.category='jewelry' and i.item_id = r.item_id
                       GROUP BY id,name,price, description,img_url
                        """.format(interval, top)
