@@ -21,7 +21,7 @@ data:
   database_password: ZWtzZ2RiZGVtbw==
   database_user: ZGJ1c2VyMQ==
   database_host: YWdkYnRlc3QuZWtzZ2RiLmNvbQ==
-  database_ro_host: YWRidGVzdC5jbHVzdGVyLXJvLWNxeTlpZ2txZ2d5bi51cy1lYXN0LTIucmRzLmFtYXpvbmF3cy5jb20=
+  database_ro_host: ROENDPOINT
   database_port: NTQzMg==
   database_db_name: ZWtzZ2RiZGVtbw==
   secret_key: ZWtzZ2RiZGVtb3NlY3JldA==
