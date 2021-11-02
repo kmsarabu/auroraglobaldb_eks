@@ -5,6 +5,12 @@ metadata:
   labels:
     app: octank
 ---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -15,7 +21,7 @@ data:
   database_password: ZWtzZ2RiZGVtbw==
   database_user: ZGJ1c2VyMQ==
   database_host: YWdkYnRlc3QuZWtzZ2RiLmNvbQ==
-  database_ro_host: <ro endpoint base64 encoded value>
+  database_ro_host: YWRidGVzdC5jbHVzdGVyLXJvLWNxeTlpZ2txZ2d5bi51cy1lYXN0LTIucmRzLmFtYXpvbmF3cy5jb20=
   database_port: NTQzMg==
   database_db_name: ZWtzZ2RiZGVtbw==
   secret_key: ZWtzZ2RiZGVtb3NlY3JldA==
@@ -55,7 +61,7 @@ spec:
         image: ksarabu/kart:1.0
         resources:
           requests:
-            cpu: "500m"
+            cpu: "250m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8445
@@ -126,7 +132,7 @@ spec:
         image: ksarabu/product:1.0
         resources:
           requests:
-            cpu: "500m"
+            cpu: "250m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8444
@@ -197,7 +203,7 @@ spec:
         image: ksarabu/user:1.0
         resources:
           requests:
-            cpu: "500m"
+            cpu: "250m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8446
@@ -239,19 +245,16 @@ spec:
                  key: authtoken
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: webapp-deployment
+  name: webapp
   namespace: octank
   labels:
     app: octank
     service: webapp
 spec:
   replicas: 2
-  strategy:
-    rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
+  serviceName: webapp
   selector:
     matchLabels:
       app: octank
@@ -262,16 +265,18 @@ spec:
         app: octank
         service: webapp
     spec:
-      restartPolicy: Always
       containers:
       - name: webapp
         image: ksarabu/webapp:1.0
         resources:
           requests:
-            cpu: "500m"
+            cpu: "250m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8443
+        volumeMounts:
+        - name: efs-data
+          mountPath: /appdata
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -328,59 +333,16 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: order_service
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: octank-test-deployment
-  namespace: octank
-  labels:
-    app: octank
-    service: octank-test
-spec:
-  replicas: 1
-  strategy:
-    rollingUpdate:
-      maxSurge: 2
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: octank
-      service: octank-test
-  template:
-    metadata:
-      labels:
-        app: octank
-        service: octank-test
-    spec:
       restartPolicy: Always
-      containers:
-      - name: octank-test
-        image: ksarabu/octank-test:1.0
-        imagePullPolicy: Always
-        ports:
-         - containerPort: 8447
-        env:
-          - name: PRODUCTS_SERVICE
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: product_service
-          - name: KART_SERVICE
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: kart_service
-          - name: USER_SERVICE
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: user_service
-          - name: ORDER_SERVICE
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: order_service
+  volumeClaimTemplates:
+  - metadata:
+      name: efs-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: efs-sc
+      resources:
+        requests:
+          storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -412,7 +374,7 @@ spec:
         image: ksarabu/order:1.0
         resources:
           requests:
-            cpu: "500m"
+            cpu: "250m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8448
@@ -532,24 +494,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: octank-test
-  namespace: octank
-  labels:
-    app: oktank
-    service: octank-test
-spec:
-  type: NodePort
-  selector:
-    app: octank
-    service: octank-test
-  ports:
-    - port: 8447
-      targetPort: 8447
-      name: http
----
-apiVersion: v1
-kind: Service
-metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -572,4 +516,36 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 8443
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-pv1
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-sc
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-07da7c724a0eeee7e
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-pv2
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-sc
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-07da7c724a0eeee7e
 ---
