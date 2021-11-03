@@ -225,13 +225,28 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Sub '10.${ClassB}.74.0/20'
+      CidrBlock: !Sub '10.${ClassB}.64.0/20'
       AvailabilityZone: !Select [0, !GetAZs ]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-pub-sub-a
+        - Key: kubernetes.io/role/elb
+          Value: 1
  
+  SubnetBPublic:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Sub '10.${ClassB}.80.0/20'
+      AvailabilityZone: !Select [0, !GetAZs ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-pub-sub-b
+        - Key: kubernetes.io/role/elb
+          Value: 1
+
   RouteTable:
     Type: 'AWS::EC2::RouteTable'
     Properties:
@@ -254,6 +269,12 @@ Resources:
       SubnetId: !Ref SubnetAPublic
       RouteTableId: !Ref RouteTable
 
+  SubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetBPublic
+      RouteTableId: !Ref RouteTable
+
   natEip:
     Type: AWS::EC2::EIP
     Properties:
@@ -266,6 +287,13 @@ Resources:
       AllocationId: !GetAtt natEip.AllocationId
       SubnetId: !Ref SubnetAPublic
 
+  vpcNgwb:
+    Type: AWS::EC2::NatGateway
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      AllocationId: !GetAtt natEip.AllocationId
+      SubnetId: !Ref SubnetBPublic
+
   SubnetAPrivate:
     Type: 'AWS::EC2::Subnet'
     Properties:
@@ -275,6 +303,8 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}-pvt-a
+      - Key: kubernetes.io/role/internal-elb
+        Value: 1
 
   SubnetBPrivate:
     Type: 'AWS::EC2::Subnet'
@@ -285,16 +315,20 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}-pvt-b
+      - Key: kubernetes.io/role/internal-elb
+        Value: 1
         
   SubnetCPrivate:
     Type: 'AWS::EC2::Subnet'
     Properties:
       AvailabilityZone: !Select [2, !GetAZs '']
-      CidrBlock: !Sub '10.${ClassB}.58.0/20'
+      CidrBlock: !Sub '10.${ClassB}.48.0/20'
       VpcId: !Ref VPC
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}-pvt-c
+      - Key: kubernetes.io/role/internal-elb
+        Value: 1
 
   RouteTablePrivate:
     Type: 'AWS::EC2::RouteTable'

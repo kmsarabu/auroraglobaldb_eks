@@ -17,7 +17,7 @@ eksctl create iamserviceaccount \
   --namespace kube-system \
   --region $AWS_REGION \
   --name aws-load-balancer-controller \
-  --attach-policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/AWSLoadBalancerControllerIAMPolicy \
+  --attach-policy-arn "arn:aws:iam::${ACCOUNT_ID}:policy/AWSLoadBalancerControllerIAMPolicy" \
   --override-existing-serviceaccounts \
   --approve
 if [[ $? -ne 0 ]]; then
