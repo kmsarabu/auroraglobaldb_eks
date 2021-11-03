@@ -48,6 +48,18 @@ def get_product(product, id):
 	product_items = [dict(p) for p in product_items]
 	return jsonify({'title': 'Product View', 'product_items': product_items})
 	
+@products_bp.route("/whereami")
+def whereami():
+	product = Product()
+	try:
+		return jsonify(product.whereami())
+	except Exception as e:
+		try:
+			return jsonify(product.whereami())
+		except Exception as e:
+			print ("EXCEPTION: {}".format(e))
+			abort(500)
+
 @products_bp.route("/view")
 def view():
 	id = request.args.get("id") and int(request.args.get("id")) or None

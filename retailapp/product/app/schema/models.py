@@ -147,6 +147,14 @@ class Product:
         with connect("reader") as dbconn:
             return self.fetch_data(dbconn, sqlstmt)
 
+    def whereami(self):
+        sqlstmt = "select inet_server_addr();"
+        with connect("writer") as dbconn:
+            writer = self.fetch_data(dbconn, sqlstmt, "writer")
+        with connect("reader") as dbconn:
+            reader = self.fetch_data(dbconn, sqlstmt, "writer")
+        return [{"writer": writer, "reader": reader}]
+
     def addProduct(self, category, product):
         if not isinstance(product, list):
             product = ast.literal_eval(product)

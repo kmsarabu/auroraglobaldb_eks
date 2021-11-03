@@ -92,6 +92,9 @@ class Product:
         self.products_service = ModelsApi(os.environ.get('PRODUCTS_SERVICE') + "/products")
         self.product_name = product_name
 
+    def whereami(self):
+        return self.products_service._get('whereami')
+
     def return_items(self):
         return self.products_service._get(self.product_name)
 

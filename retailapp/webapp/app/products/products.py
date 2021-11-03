@@ -59,3 +59,7 @@ def view():
 			title="Product View"
 			)
 
+@products_bp.route("/whereami")
+def whereami():
+	return Product().whereami
+

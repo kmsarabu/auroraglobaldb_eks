@@ -17,7 +17,19 @@ def home():
 
 @general_bp.route("/apiproduct", methods = ['get'])
 def apiproduct():
-	return {"id": "octank"}, 200
+	try:
+		whereami = models.Product().whereami()
+		r = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document', timeout=30)
+		if r.status_code == 200:
+			return {"id": "octank", "region": r.json().get('region'), "instanceId": r.json().get('instanceId'), "Aurora": whereami }, 200
+		else:
+			return {"id": "octank", "region": "", "instanceId": "", "Aurora": whereami}, 200
+	except:
+		return {"id": "octank", "region": "", "instanceId": ""}, 200
+
+@general_bp.route("/healthcheck", methods=['get'])
+def healthcheck():
+	return {'status': 'success'}, 200
 
 @general_bp.route("/analytic")
 def analytics():
