@@ -8,9 +8,15 @@ eksctl utils associate-iam-oidc-provider \
   --approve
 
 curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.3.0/docs/install/iam_policy.json
+curl -o iam_policy_v1_to_v2_additional.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.3.0/docs/install/iam_policy_v1_to_v2_additional.json
+
 aws iam create-policy \
   --policy-name AWSLoadBalancerControllerIAMPolicy \
   --policy-document file://iam_policy.json
+
+aws iam create-policy \
+  --policy-name AWSLoadBalancerControllerAdditionalIAMPolicy \
+  --policy-document file://iam_policy_v1_to_v2_additional.json
 
 eksctl create iamserviceaccount \
   --cluster eksgdbclu \
@@ -25,19 +31,24 @@ if [[ $? -ne 0 ]]; then
  exit 1
 fi
 
+myrole=$(eksctl get iamserviceaccount --cluster eksgdbclu --name aws-load-balancer-controller --namespace kube-system -o json | jq '.[].status.roleARN' | awk -F/ '{print $2}' |awk -F\" '{print $1}')
+
+ws iam attach-role-policy \
+  --role-name ${myrole} \
+  --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
+
 kubectl apply -k github.com/aws/eks-charts/stable/aws-load-balancer-controller/crds?ref=master
 
 kubectl get crd
 
 helm repo add eks https://aws.github.io/eks-charts
 
-helm upgrade -i aws-load-balancer-controller \
+helm install aws-load-balancer-controller \
     eks/aws-load-balancer-controller \
     -n kube-system \
     --set clusterName=eksgdbclu \
     --set serviceAccount.create=false \
-    --set serviceAccount.name=aws-load-balancer-controller \
-    --set image.tag="v2.3.0"
+    --set serviceAccount.name=aws-load-balancer-controller
 
 kubectl -n kube-system rollout status deployment aws-load-balancer-controller
 
