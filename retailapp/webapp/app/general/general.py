@@ -1,5 +1,4 @@
-from flask import Flask, session, Blueprint, render_template, request, jsonify, url_for, redirect, Response
-import jsonify
+from flask import Flask, session, Blueprint, render_template, request, jsonify, url_for, redirect
 import requests
 import json
 import os
@@ -17,15 +16,22 @@ def home():
 
 @general_bp.route("/apiproduct", methods = ['get'])
 def apiproduct():
+	r = None
+	whereami = None
+	content = {"id": "octank"}
+	whereami = models.Product().whereami()
+	if whereami:
+		whereami = whereami.json()
+		content["Aurora"] = {"reader": whereami and whereami[0] and whereami[0].get("reader") and whereami[0].get("reader")[0] or None,
+			     "writer": whereami and whereami[0] and whereami[0].get("reader") and whereami[0].get("writer")[0] or None}
 	try:
-		whereami = models.Product().whereami()
-		r = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document', timeout=30)
+		r = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document', timeout=5)
 		if r.status_code == 200:
-			return {"id": "octank", "region": r.json().get('region'), "instanceId": r.json().get('instanceId'), "Aurora": whereami }, 200
-		else:
-			return {"id": "octank", "region": "", "instanceId": "", "Aurora": whereami}, 200
+			content["region"] = r.json().get("region")
+			content["instanceId"] = r.json().get("instanceId")
 	except:
-		return {"id": "octank", "region": "", "instanceId": ""}, 200
+		pass
+	return jsonify(content), 200
 
 @general_bp.route("/healthcheck", methods=['get'])
 def healthcheck():
