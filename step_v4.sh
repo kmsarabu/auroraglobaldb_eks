@@ -1,6 +1,7 @@
 #!/bin/bash
 
 vpcid=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
+AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 
 rm -f eksauroragdb.yaml
 
@@ -52,6 +53,12 @@ defreg=$AWS_DEFAULT_REGION
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
 
 eksctl create cluster -f eksauroragdb.yaml
+
+kubectl get nodes
+if [[ $? -ne 0 ]]; then
+ echo Error in listing nodes, pls check
+ exit 1
+fi
 
 STACK_NAME=$(eksctl get nodegroup --cluster eksgdbclu -o json | jq -r '.[].StackName')
 ROLE_NAME=$(aws cloudformation describe-stack-resources --stack-name $STACK_NAME | jq -r '.StackResources[] | select(.ResourceType=="AWS::IAM::Role") | .PhysicalResourceId')
@@ -123,6 +130,8 @@ EoF
 aws iam create-policy   \
   --policy-name k8s-asg-policy \
   --policy-document file://~/environment/cluster-autoscaler/k8s-asg-policy.json
+
+ACCOUNT_ID=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.accountId')
 
 eksctl create iamserviceaccount \
     --name cluster-autoscaler \

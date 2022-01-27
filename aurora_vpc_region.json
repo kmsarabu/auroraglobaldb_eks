@@ -266,13 +266,13 @@ Resources:
   SubnetRouteTableAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
-      SubnetId: !Ref SubnetAPublic
+      SubnetId: !Ref SubnetBPublic
       RouteTableId: !Ref RouteTable
 
   SubnetRouteTableAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
-      SubnetId: !Ref SubnetBPublic
+      SubnetId: !Ref SubnetAPublic
       RouteTableId: !Ref RouteTable
 
   natEip:
@@ -286,13 +286,6 @@ Resources:
     Properties:
       AllocationId: !GetAtt natEip.AllocationId
       SubnetId: !Ref SubnetAPublic
-
-  vpcNgwb:
-    Type: AWS::EC2::NatGateway
-    DependsOn: VPCGatewayAttachment
-    Properties:
-      AllocationId: !GetAtt natEip.AllocationId
-      SubnetId: !Ref SubnetBPublic
 
   SubnetAPrivate:
     Type: 'AWS::EC2::Subnet'
@@ -391,6 +384,18 @@ Resources:
       Egress: true
       CidrBlock: '0.0.0.0/0'
 
+  SubnetNetworkAclAssociationAPublic:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetAPublic
+      NetworkAclId: !Ref NetworkAclPublic
+
+  SubnetNetworkAclAssociationBPublic:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetBPublic
+      NetworkAclId: !Ref NetworkAclPublic
+
   NetworkAclPrivate:
     Type: 'AWS::EC2::NetworkAcl'
     Properties:
@@ -484,7 +489,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: !Ref DBPort
         ToPort: !Ref DBPort
-        CidrIp: !Sub '10.${ClassB}.0.0/16'
+        CidrIp: !Sub '10.0.0.0/16'
         Description: 'Access to AppServer Host Security Group'
       VpcId: !Ref VPC
       Tags:

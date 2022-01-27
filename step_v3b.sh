@@ -10,7 +10,20 @@ iamrole=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stack
 vpcid=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
 instid=$(aws ec2 describe-instances --filters Name=vpc-id,Values=${vpcid} --query 'Reservations[].Instances[].InstanceId' --output text)
 
-aws ec2 associate-iam-instance-profile --iam-instance-profile Name=cloud9InstanceProfile --instance-id ${instid}
+output=$(aws ec2 describe-iam-instance-profile-associations --filters Name=instance-id,Values=${instid} --query 'IamInstanceProfileAssociations[].IamInstanceProfile.Arn' --output text)
+
+echo  "${output}" | egrep "cloud9InstanceProfile" >/dev/null 2>&1
+if [[ $? -ne 0 ]]; then
+   if [[ -n "${output}" ]]; then
+        associd=$(aws ec2 describe-iam-instance-profile-associations --filters Name=instance-id,Values=${instid} --query 'IamInstanceProfileAssociations[].AssociationId' --output text)
+	aws ec2 disassociate-iam-instance-profile --association-id ${associd}
+   fi
+   aws ec2 associate-iam-instance-profile --iam-instance-profile Name=cloud9InstanceProfile --instance-id ${instid}
+   if [[ $? -ne 0 ]]; then
+	echo Error in associating instance profile, pls chk, fix and retry
+        exit 1
+   fi
+fi
 
 rm -vf ${HOME}/.aws/credentials
 
