@@ -522,11 +522,11 @@ metadata:
   name: webappnp
   namespace: octank
   labels:
-    app: oktank
     service: webappnp
 spec:
   type: NodePort
   selector:
+    app: oktank
     service: webapp
   ports:
     - port: 80

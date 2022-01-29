@@ -66,8 +66,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: pgbouncer-service
-    service: octank-pgb
+    app: pgbouncer
   ports:
     - name: pgbouncer
       protocol: TCP
