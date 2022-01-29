@@ -40,4 +40,7 @@ kubectl completion bash >>  ~/.bash_completion
 echo 'export LBC_VERSION="v2.2.0"' >>  ~/.bash_profile
 .  ~/.bash_profile
 
+## Install PostgreSQL libraries
+sudo amazon-linux-extras install postgresql13 -y
+sudo yum -y install postgresql-contrib postgresql-devel
 

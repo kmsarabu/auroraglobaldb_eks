@@ -332,12 +332,12 @@ COPY dbschema.kart (userid, productid, qty) FROM stdin;
 -- Data for Name: order_details; Type: TABLE DATA; Schema: dbschema; Owner: dbuser1
 --
 
-COPY dbschema.order_details (order_id, item_id, category, qty, total) FROM stdin;
-1	8	fashion	1	67.95
-1	9	fashion	1	38.95
-1	7	fashion	1	91.95
-2	6	fashion	1	199.95
-3	6	fashion	1	199.95
+COPY dbschema.order_details (order_id, item_id, qty, total) FROM stdin;
+1	8	1	67.95
+1	9	1	38.95
+1	7	1	91.95
+2	6	1	199.95
+3	6	1	199.95
 \.
 
 
