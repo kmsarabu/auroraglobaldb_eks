@@ -64,11 +64,13 @@ metadata:
   labels:
     app: pgbouncer-service
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
-    app: pgbouncer
+    app: pgbouncer-service
+    service: octank-pgb
   ports:
     - name: pgbouncer
       protocol: TCP
       port: 6432
       targetPort: 6432
+---
