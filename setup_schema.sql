@@ -16,6 +16,9 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+drop database eksgdbdemo ;
+drop user dbuser1 ;
+
 create database eksgdbdemo ;
 \c eksgdbdemo;
 
@@ -208,6 +211,8 @@ CREATE SEQUENCE dbschema.order_seq
     CACHE 1;
 
 ALTER TABLE dbschema.order_seq OWNER TO dbuser1;
+ALTER SEQUENCE dbschema.users_id_seq OWNER TO dbuser1;
+ALTER SEQUENCE dbschema.order_seq OWNER TO dbuser1;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: dbschema; Owner: dbuser1
@@ -588,7 +593,7 @@ ALTER TABLE ONLY dbschema.kart
 --
 
 ALTER TABLE ONLY dbschema.order_details
-    ADD CONSTRAINT order_details_pk PRIMARY KEY (order_id, item_id, category);
+    ADD CONSTRAINT order_details_pk PRIMARY KEY (order_id, item_id);
 
 
 --
