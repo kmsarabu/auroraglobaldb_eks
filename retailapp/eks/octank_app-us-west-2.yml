@@ -20,10 +20,10 @@ type: Opaque
 data:
   database_password: ZWtzZ2RiZGVtbw==
   database_user: ZGJ1c2VyMQ==
-  database_host: RWENDPOINT
-  database_ro_host: ROENDPOINT
+  database_host: b2N0YW5rLXBnYi5vY3Rhbmsuc3ZjLmNsdXN0ZXIubG9jYWw=
   database_port: NjQzMg==
-  database_db_name: ZWtzZ2RiZGVtbw==
+  database_db_name: Z2RiZGVtbw==
+  database_rodb_name: Z2RiZGVtby1ybw==
   secret_key: ZWtzZ2RiZGVtb3NlY3JldA==
   authtoken: ZWtzZ2RiZGVtb3Rva2Vu
   kart_service: aHR0cDovL2thcnQub2N0YW5rLnN2Yy5jbHVzdGVyLmxvY2FsOjg0NDU=
@@ -71,11 +71,6 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
-          - name: DATABASE_RO_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -96,6 +91,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
+          - name: DATABASE_RODB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
@@ -147,11 +147,6 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
-          - name: DATABASE_RO_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -172,6 +167,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
+          - name: DATABASE_RODB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
@@ -223,11 +223,6 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
-          - name: DATABASE_RO_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -248,6 +243,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
+          - name: DATABASE_RODB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
@@ -298,11 +298,6 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
-          - name: DATABASE_RO_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -323,6 +318,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
+          - name: DATABASE_RODB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
@@ -404,11 +404,6 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_host
-          - name: DATABASE_RO_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_ro_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
@@ -429,6 +424,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
+          - name: DATABASE_RODB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:

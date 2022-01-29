@@ -4,13 +4,13 @@ import os
 
 
 def connect(type="writer"):
-    rds_rw_host = os.environ['DATABASE_HOST']
-    rds_ro_host = os.environ['DATABASE_RO_HOST']
+    rds_host = os.environ['DATABASE_HOST']
     db_user = os.environ['DATABASE_USER']
     password = os.environ['DATABASE_PASSWORD']
-    db_name = os.environ['DATABASE_DB_NAME']
+    rw_db_name = os.environ['DATABASE_DB_NAME']
+    ro_db_name = os.environ['DATABASE_RODB_NAME']
     port = os.environ['DATABASE_PORT']
-    rds_host = rds_rw_host if type == "writer" else rds_ro_host
+    db_name = rw_db_name if type == "writer" else ro_db_name
     return psycopg2.connect(sslmode="require", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
 
 class Product:
@@ -55,7 +55,7 @@ class Product:
                        from (
                         select item_id, count(1) as cnt
                         from orders a join order_details b 
-                         on a.order_id = b.order_id and a.order_date >= now() - interval '{0}' day
+                         on a.order_id = b.order_id
                         group by item_id
                         ) t
                        ) t where mrank <= {1} order by cnt desc
@@ -79,7 +79,7 @@ class Product:
                        FROM jewelry a join items i on i.item_id = a.id 
                        left outer join reviews r on r.category='jewelry' and i.item_id = r.item_id
                       GROUP BY id,name,price, description,img_url
-                       """.format(interval, top)
+                       """.format(top)
             return self.fetch_data(dbconn, sqlstmt)
 
     def show_all_items(self, id=None):

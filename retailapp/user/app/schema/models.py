@@ -9,6 +9,7 @@ def connect():
     db_user = os.environ['DATABASE_USER']
     password = os.environ['DATABASE_PASSWORD']
     db_name = os.environ['DATABASE_DB_NAME']
+    rodb_name = os.environ['DATABASE_RODB_NAME']
     port = os.environ['DATABASE_PORT']
     ctr = 0
     while ctr <= 60:

@@ -5,12 +5,6 @@ metadata:
   labels:
     app: octank
 ---
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: efs-sc
-provisioner: efs.csi.aws.com
----
 apiVersion: v1
 kind: Secret
 metadata:
@@ -18,18 +12,22 @@ metadata:
   namespace: octank
 type: Opaque
 data:
-  database_password: ZWtzZ2RiZGVtbw==
-  database_user: ZGJ1c2VyMQ==
-  database_host: b2N0YW5rLXBnYi5vY3Rhbmsuc3ZjLmNsdXN0ZXIubG9jYWw=
-  database_port: NjQzMg==
-  database_db_name: Z2RiZGVtbw==
-  database_rodb_name: Z2RiZGVtby1ybw==
-  secret_key: ZWtzZ2RiZGVtb3NlY3JldA==
-  authtoken: ZWtzZ2RiZGVtb3Rva2Vu
-  kart_service: aHR0cDovL2thcnQub2N0YW5rLnN2Yy5jbHVzdGVyLmxvY2FsOjg0NDU=
-  product_service: aHR0cDovL3Byb2R1Y3Qub2N0YW5rLnN2Yy5jbHVzdGVyLmxvY2FsOjg0NDQ=
-  user_service: aHR0cDovL3VzZXIub2N0YW5rLnN2Yy5jbHVzdGVyLmxvY2FsOjg0NDY=
-  order_service: aHR0cDovL29yZGVyLm9jdGFuay5zdmMuY2x1c3Rlci5sb2NhbDo4NDQ4
+  database_password: xyz
+  database_user: xyz
+  database_host: xyz
+  database_port: xyz
+  database_db_name: xyz
+  echost: xyz
+  secret_key: xyz
+  authtoken: xyz
+  kart_service: xyz
+  product_service: xyz
+  user_service: xyz
+  order_service: xyz
+  memdb_host: xyz
+  memdb_port: xyz
+  memdb_user: xyz
+  memdb_pass: xyz
 --- 
 apiVersion: apps/v1
 kind: Deployment
@@ -43,7 +41,7 @@ spec:
   replicas: 2
   strategy:
     rollingUpdate:
-      maxSurge: 3
+      maxSurge: 2
       maxUnavailable: 0
   selector:
     matchLabels:
@@ -58,10 +56,10 @@ spec:
       restartPolicy: Always
       containers:
       - name: kart
-        image: ksarabu/kart:1.0
+        image: xyz.dkr.ecr.us-east-1.amazonaws.com/octank-kart:latest
         resources:
           requests:
-            cpu: "250m"
+            cpu: "500m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8445
@@ -91,238 +89,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
-          - name: DATABASE_RODB_NAME
+          - name: ECHOST
             valueFrom:
               secretKeyRef:
                  name: octank-secret
-                 key: database_rodb_name
-          - name: SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: secret_key
-          - name: AUTHTOKEN
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: authtoken
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: product-deployment
-  namespace: octank
-  labels:
-    app: octank
-    service: product
-spec:
-  replicas: 2
-  strategy:
-    rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: octank
-      service: product
-  template:
-    metadata:
-      labels:
-        app: octank
-        service: product
-    spec:
-      restartPolicy: Always
-      containers:
-      - name: product
-        image: ksarabu/product:1.0
-        resources:
-          requests:
-            cpu: "250m"
-        imagePullPolicy: Always
-        ports:
-         - containerPort: 8444
-        env:
-          - name: DATABASE_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_host
-          - name: DATABASE_PORT
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_port
-          - name: DATABASE_USER
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_user
-          - name: DATABASE_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_password
-          - name: DATABASE_DB_NAME
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_db_name
-          - name: DATABASE_RODB_NAME
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_rodb_name
-          - name: SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: secret_key
-          - name: AUTHTOKEN
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: authtoken
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: user-deployment
-  namespace: octank
-  labels:
-    app: octank
-    service: user
-spec:
-  replicas: 2
-  strategy:
-    rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: octank
-      service: user
-  template:
-    metadata:
-      labels:
-        app: octank
-        service: user
-    spec:
-      restartPolicy: Always
-      containers:
-      - name: user
-        image: ksarabu/user:1.0
-        resources:
-          requests:
-            cpu: "250m"
-        imagePullPolicy: Always
-        ports:
-         - containerPort: 8446
-        env:
-          - name: DATABASE_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_host
-          - name: DATABASE_PORT
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_port
-          - name: DATABASE_USER
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_user
-          - name: DATABASE_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_password
-          - name: DATABASE_DB_NAME
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_db_name
-          - name: DATABASE_RODB_NAME
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_rodb_name
-          - name: SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: secret_key
-          - name: AUTHTOKEN
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: authtoken
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: webapp
-  namespace: octank
-  labels:
-    app: octank
-    service: webapp
-spec:
-  replicas: 2
-  serviceName: webapp
-  selector:
-    matchLabels:
-      app: octank
-      service: webapp
-  template:
-    metadata:
-      labels:
-        app: octank
-        service: webapp
-    spec:
-      containers:
-      - name: webapp
-        image: ksarabu/webapp:1.0
-        resources:
-          requests:
-            cpu: "250m"
-        imagePullPolicy: Always
-        ports:
-         - containerPort: 8443
-        volumeMounts:
-        - name: efs-data
-          mountPath: /appdata
-        env:
-          - name: DATABASE_HOST
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_host
-          - name: DATABASE_PORT
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_port
-          - name: DATABASE_USER
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_user
-          - name: DATABASE_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_password
-          - name: DATABASE_DB_NAME
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_db_name
-          - name: DATABASE_RODB_NAME
-            valueFrom:
-              secretKeyRef:
-                 name: octank-secret
-                 key: database_rodb_name
+                 key: echost
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
@@ -353,16 +124,427 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: order_service
-      restartPolicy: Always
-  volumeClaimTemplates:
-  - metadata:
-      name: efs-data
+          - name: MEMDB_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_host
+          - name: MEMDB_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_port
+          - name: MEMDB_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_user
+          - name: MEMDB_PASS
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_pass
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-deployment
+  namespace: octank
+  labels:
+    app: octank
+    service: product
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: octank
+      service: product
+  template:
+    metadata:
+      labels:
+        app: octank
+        service: product
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: efs-sc
-      resources:
-        requests:
-          storage: 1Gi
+      restartPolicy: Always
+      containers:
+      - name: product
+        image: xyz.dkr.ecr.us-east-1.amazonaws.com/octank-product:latest
+        resources:
+          requests:
+            cpu: "500m"
+        imagePullPolicy: Always
+        ports:
+         - containerPort: 8444
+        env:
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_host
+          - name: DATABASE_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_port
+          - name: DATABASE_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_user
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_password
+          - name: DATABASE_DB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_db_name
+          - name: ECHOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: echost
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: secret_key
+          - name: AUTHTOKEN
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: authtoken
+          - name: PRODUCTS_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: product_service
+          - name: KART_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: kart_service
+          - name: USER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: user_service
+          - name: ORDER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: order_service
+          - name: MEMDB_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_host
+          - name: MEMDB_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_port
+          - name: MEMDB_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_user
+          - name: MEMDB_PASS
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_pass
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-deployment
+  namespace: octank
+  labels:
+    app: octank
+    service: user
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: octank
+      service: user
+  template:
+    metadata:
+      labels:
+        app: octank
+        service: user
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: user
+        image: xyz.dkr.ecr.us-east-1.amazonaws.com/octank-user:latest
+        resources:
+          requests:
+            cpu: "500m"
+        imagePullPolicy: Always
+        ports:
+         - containerPort: 8446
+        env:
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_host
+          - name: DATABASE_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_port
+          - name: DATABASE_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_user
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_password
+          - name: DATABASE_DB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_db_name
+          - name: ECHOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: echost
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: secret_key
+          - name: AUTHTOKEN
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: authtoken
+          - name: PRODUCTS_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: product_service
+          - name: KART_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: kart_service
+          - name: USER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: user_service
+          - name: ORDER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: order_service
+          - name: MEMDB_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_host
+          - name: MEMDB_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_port
+          - name: MEMDB_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_user
+          - name: MEMDB_PASS
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_pass
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  namespace: octank
+  labels:
+    app: octank
+    service: webapp
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: octank
+      service: webapp
+  template:
+    metadata:
+      labels:
+        app: octank
+        service: webapp
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: webapp
+        image: xyz.dkr.ecr.us-east-1.amazonaws.com/octank-webapp:latest
+        resources:
+          requests:
+            cpu: "500m"
+        imagePullPolicy: Always
+        ports:
+         - containerPort: 8443
+        env:
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_host
+          - name: DATABASE_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_port
+          - name: DATABASE_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_user
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_password
+          - name: DATABASE_DB_NAME
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: database_db_name
+          - name: ECHOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: echost
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: secret_key
+          - name: AUTHTOKEN
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: authtoken
+          - name: PRODUCTS_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: product_service
+          - name: KART_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: kart_service
+          - name: USER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: user_service
+          - name: ORDER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: order_service
+          - name: MEMDB_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_host
+          - name: MEMDB_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_port
+          - name: MEMDB_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_user
+          - name: MEMDB_PASS
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_pass
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: octank-test-deployment
+  namespace: octank
+  labels:
+    app: octank
+    service: octank-test
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: octank
+      service: octank-test
+  template:
+    metadata:
+      labels:
+        app: octank
+        service: octank-test
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: octank-test
+        image: xyz.dkr.ecr.us-east-1.amazonaws.com/octank-test:latest
+        imagePullPolicy: Always
+        ports:
+         - containerPort: 8447
+        env:
+          - name: PRODUCTS_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: product_service
+          - name: KART_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: kart_service
+          - name: USER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: user_service
+          - name: ORDER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: order_service
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -376,7 +558,7 @@ spec:
   replicas: 2
   strategy:
     rollingUpdate:
-      maxSurge: 3
+      maxSurge: 2
       maxUnavailable: 0
   selector:
     matchLabels:
@@ -391,10 +573,10 @@ spec:
       restartPolicy: Always
       containers:
       - name: order
-        image: ksarabu/order:1.0
+        image: xyz.dkr.ecr.us-east-1.amazonaws.com/octank-order:latest
         resources:
           requests:
-            cpu: "250m"
+            cpu: "500m"
         imagePullPolicy: Always
         ports:
          - containerPort: 8448
@@ -424,11 +606,11 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: database_db_name
-          - name: DATABASE_RODB_NAME
+          - name: ECHOST
             valueFrom:
               secretKeyRef:
                  name: octank-secret
-                 key: database_rodb_name
+                 key: echost
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
@@ -439,6 +621,41 @@ spec:
               secretKeyRef:
                  name: octank-secret
                  key: authtoken
+          - name: PRODUCTS_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: product_service
+          - name: KART_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: kart_service
+          - name: USER_SERVICE
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: user_service
+          - name: MEMDB_HOST
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_host
+          - name: MEMDB_PORT
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_port
+          - name: MEMDB_USER
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_user
+          - name: MEMDB_PASS
+            valueFrom:
+              secretKeyRef:
+                 name: octank-secret
+                 key: memdb_pass
 ---
 apiVersion: v1
 kind: Service
@@ -519,83 +736,43 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: webappnp
+  name: octank-test
   namespace: octank
   labels:
     app: oktank
-    service: webappnp
+    service: octank-test
 spec:
   type: NodePort
   selector:
-    service: webapp
+    app: octank
+    service: octank-test
   ports:
-    - port: 80
-      targetPort: 8443
-      protocol: TCP
+    - port: 8447
+      targetPort: 8447
+      name: http
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: v1
+kind: Service
 metadata:
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/ip-address-type: ipv4
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/target-type: instance
   name: webapp
   namespace: octank
   labels:
     app: oktank
     service: webapp
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/tags: Application=webapp
-    alb.ingress.kubernetes.io/target-type: instance
-    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
-    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
-    alb.ingress.kubernetes.io/healthcheck-path: /healthcheck
-    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '60'
-    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '30'
-    alb.ingress.kubernetes.io/success-codes: '200'
-    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
-    alb.ingress.kubernetes.io/unhealthy-threshold-count: '5'
-    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true, load_balancing.algorithm.type=least_outstanding_requests
 spec:
-  rules:
-   - http:
-      paths:
-       - path: /
-         pathType: Prefix
-         backend:
-          service:
-            name: webappnp
-            port:
-              number: 80
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: efs-pv1
-spec:
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs-sc
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: EFS_VOLUME_ID
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: efs-pv2
-spec:
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs-sc
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: EFS_VOLUME_ID
+  type: LoadBalancer
+  selector:
+    app: octank
+    service: webapp
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8443
 ---
