@@ -21,9 +21,14 @@ fi
 
 ## Generate configuration for PgBouncer
 ## Get DB Credentials using aurora-pg/EKSGDB1
-secret=$(aws secretsmanager get-secret-value --secret-id aurora-pg/EKSGDB1 --query 'SecretString' --output text)
+secret=$(aws secretsmanager get-secret-value --secret-id aurora-pg/EKSGDB1 --query SecretString --output text)
 dbuser=`echo "$secret" | sed -n 's/.*"username":["]*\([^(",})]*\)[",}].*/\1/p'`
 dbpass=`echo "$secret" | sed -n 's/.*"password":["]*\([^(",})]*\)[",}].*/\1/p'`
+
+if [[ -z $dbuser || -z $dbpass ]]; then
+	echo Error in extracting database user credentials from secretsmanager
+	exit 1
+fi
 
 psql -h $rwendpoint -U $dbuser -p $dbpass -d postgres -f setup_schema.sql
 
