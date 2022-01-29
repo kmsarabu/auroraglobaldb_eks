@@ -4,9 +4,12 @@ roendpoint=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key ==
 
 replicaSourceArn=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].ReplicationSourceIdentifier' --output text)
 
+runscript=0
+
 if [[ -z "${replicaSourceArn}" ]]; then
 	rwendpoint=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].Endpoint' --output text)
 else
+	runscript=1
 	rwregion=`echo $replicaSourceArn |awk -F: '{print $4}'`
 	rwendpoint=$(aws rds describe-db-clusters --region ${rwregion} --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].Endpoint' --output text)
 fi
@@ -30,8 +33,10 @@ if [[ -z $dbuser || -z $dbpass ]]; then
 	exit 1
 fi
 
+if [[ $runscript -eq 1 ]]; then
 export PGPASSWORD=$dbpass
 psql -h $rwendpoint -U $dbuser -p 5432 -d postgres -f setup_schema.sql
+fi
 
 DBUSER=dbuser1
 DBPASSWD=eksgdbdemo
@@ -65,3 +70,6 @@ pgbouncerini=`cat  /tmp/pgbouncer.ini | base64 --wrap=0`
 userlisttxt=`cat  /tmp/userlist.txt | base64 --wrap=0`
 
 sed -e "s/%pgbouncerini%/$pgbouncerini/g" -e "s/%userlisttxt%/$userlisttxt/g" PgBouncer/pgbouncer_kubernetes.yml > retailapp/eks/pgbouncer_kubernetes.yml
+
+kubectl apply -f retailapp/eks/pgbouncer_kubernetes.yml
+
