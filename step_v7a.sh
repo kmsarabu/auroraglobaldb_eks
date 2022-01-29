@@ -30,7 +30,7 @@ if [[ -z $dbuser || -z $dbpass ]]; then
 	exit 1
 fi
 
-PGPASSWORD=$dbpass
+export PGPASSWORD=$dbpass
 psql -h $rwendpoint -U $dbuser -p 5432 -d postgres -f setup_schema.sql
 
 DBUSER=dbuser1
@@ -61,7 +61,7 @@ tcp_keepintvl = 11
 tcp_keepcnt = 3
 tcp_user_timeout = 12500" > /tmp/pgbouncer.ini
 
-pgbouncerini=`cat /tmp/pgbouncer.ini | base64 --wrap=0`
-userlisttxt=`cat /tmp/userlist.txt | base64 --wrap=0`
+pgbouncerini=`cat  /tmp/pgbouncer.ini | base64 --wrap=0`
+userlisttxt=`cat  /tmp/userlist.txt | base64 --wrap=0`
 
 sed -e "s/%pgbouncerini%/$pgbouncerini/g" -e "s/%userlisttxt%/$userlisttxt/g" PgBouncer/pgbouncer_kubernetes.yml > retailapp/eks/pgbouncer_kubernetes.yml

@@ -1,16 +1,25 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: octank
+  labels:
+    app: octank
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: pgbconfig
+  namespace: octank
 type: Opaque
 data:
         pgbouncer.ini: %pgbouncerini%
         userlist.txt: %userlisttxt%
-
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pgbouncer-deployment
+  namespace: octank
   labels:
     app: pgbouncer
 spec:
@@ -46,11 +55,12 @@ spec:
         - name: pgbconfig
           secret:
             secretName: pgbconfig
-
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: octank-pgb
+  namespace: octank
   labels:
     app: pgbouncer-service
 spec:
