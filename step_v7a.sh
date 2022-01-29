@@ -30,7 +30,8 @@ if [[ -z $dbuser || -z $dbpass ]]; then
 	exit 1
 fi
 
-psql -h $rwendpoint -U $dbuser -p $dbpass -d postgres -f setup_schema.sql
+PGPASSWORD=$dbpass
+psql -h $rwendpoint -U $dbuser -p 5432 -d postgres -f setup_schema.sql
 
 DBUSER=dbuser1
 DBPASSWD=eksgdbdemo
