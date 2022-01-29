@@ -36,10 +36,23 @@ kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernete
 kubectl get pods -n kube-system
 
 roendpoint=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].ReaderEndpoint' --output text)
-ENCODEDVALUE=$(echo -n $roendpoint | base64 --wrap=0)
+ROENCODEDVALUE=$(echo -n $roendpoint | base64 --wrap=0)
 
-sed -i "s/EFS_VOLUME_ID/$FILE_SYSTEM_ID/g" retailapp/eks/octank_app-${AWS_REGION}.yml
+replicaSourceArn=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].ReplicationSourceIdentifier' --output text)
+
+runscript=0
+
+if [[ -z "${replicaSourceArn}" ]]; then
+        rwendpoint=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].Endpoint' --output text)
+else
+        runscript=1
+        rwregion=`echo $replicaSourceArn |awk -F: '{print $4}'`
+        rwendpoint=$(aws rds describe-db-clusters --region ${rwregion} --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].Endpoint' --output text)
+fi
+
+RWENCODEDVALUE=$(echo -n $rwendpoint | base64 --wrap=0)
+
 sed -i "s/EFS_VOLUME_ID/$FILE_SYSTEM_ID/g" cleanup.sh
-sed -i "s/ROENDPOINT/$ENCODEDVALUE/g" retailapp/eks/octank_app-${AWS_REGION}.yml
+sed -i -e "s/ROENDPOINT/$ROENCODEDVALUE/g" -e "s/EFS_VOLUME_ID/$FILE_SYSTEM_ID/g" -e "s/RWENDPOINT/$RWENCODEDVALUE/g" retailapp/eks/octank_app-${AWS_REGION}.yml
 
 

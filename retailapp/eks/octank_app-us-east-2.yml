@@ -20,9 +20,9 @@ type: Opaque
 data:
   database_password: ZWtzZ2RiZGVtbw==
   database_user: ZGJ1c2VyMQ==
-  database_host: YWdkYnRlc3QuZWtzZ2RiLmNvbQ==
+  database_host: RWENDPOINT
   database_ro_host: ROENDPOINT
-  database_port: NTQzMg==
+  database_port: NjQzMg==
   database_db_name: ZWtzZ2RiZGVtbw==
   secret_key: ZWtzZ2RiZGVtb3NlY3JldA==
   authtoken: ZWtzZ2RiZGVtb3Rva2Vu

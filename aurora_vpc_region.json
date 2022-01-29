@@ -489,7 +489,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: !Ref DBPort
         ToPort: !Ref DBPort
-        CidrIp: !Sub '10.0.0.0/16'
+        CidrIp: !Sub '10.0.0.0/8'
         Description: 'Access to AppServer Host Security Group'
       VpcId: !Ref VPC
       Tags:
