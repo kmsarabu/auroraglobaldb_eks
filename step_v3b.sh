@@ -25,6 +25,9 @@ if [[ $? -ne 0 ]]; then
    fi
 fi
 
+echo "Waiting for changes to take effect"
+sleep 60
+
 rm -vf ${HOME}/.aws/credentials
 
 export ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)

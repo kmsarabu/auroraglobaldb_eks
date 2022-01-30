@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ACCOUNT_ID=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.accountId')
+AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+
 roendpoint=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].ReaderEndpoint' --output text)
 
 replicaSourceArn=$(aws rds describe-db-clusters --query 'DBClusters[?(TagList[?(Key == `Application` && Value == `EKSAURGDB`)])].ReplicationSourceIdentifier' --output text)

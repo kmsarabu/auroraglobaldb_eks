@@ -2,6 +2,7 @@
 
 vpcid=$(aws cloudformation describe-stacks --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
 AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+export MASTER_ARN=$(aws kms describe-key --key-id alias/adbtest9 --query KeyMetadata.Arn --output text)
 
 rm -f eksauroragdb.yaml
 

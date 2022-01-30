@@ -29,6 +29,9 @@ aws ec2 delete-vpc-peering-connection --vpc-peering-connection-id ${VPCPEERID} -
 
 aws cloudformation delete-stack --stack-name EKSGDB2 --region ${REGION2}
 # delete IAM role Cloud9DevIAMRole
+# delete InstanceProfile cloud9InstanceProfile
+# delete policy AWSLoadBalancerControllerAdditionalIAMPolicy
+# delete policy AWSLoadBalancerControllerIAMPolicy
 
 aws cloudformation delete-stack --stack-name EKSGDB1 --region ${REGION2}
 aws cloudformation delete-stack --stack-name EKSGDB1 --region ${REGION1}

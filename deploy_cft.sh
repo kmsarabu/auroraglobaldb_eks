@@ -51,7 +51,7 @@ if [[ $? -ne 0 ]]; then
   echo "Stack aurora_gdb.json, EKSGDB2 failed to deploy on region ${REGION1}, Please check/fix the error and retry"
   exit 1
 fi
-wait_for_stack_to_complete "EKSGDB2" "${REGION1}"
+wait_for_stack_to_complete "EKSGDB2" "${REGION2}"
 
 echo "Completed deloying the CloudFormation Stacks on regions us-east-2 and us-west-2"
 

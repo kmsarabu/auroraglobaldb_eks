@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ACCOUNT_ID=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.accountId')
+AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+
 helm version --short
 
 eksctl utils associate-iam-oidc-provider \

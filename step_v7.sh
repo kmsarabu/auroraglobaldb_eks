@@ -3,6 +3,8 @@
 CLUSTER_NAME=eksgdbclu
 VPC_ID=$(aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.resourcesVpcConfig.vpcId" --output text)
 CIDR_BLOCK=$(aws ec2 describe-vpcs --vpc-ids $VPC_ID --query "Vpcs[].CidrBlock" --output text)
+ACCOUNT_ID=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.accountId')
+AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
 
 MOUNT_TARGET_GROUP_NAME="eks-efs-group"
 MOUNT_TARGET_GROUP_DESC="NFS access to EFS from EKS worker nodes"
@@ -10,6 +12,8 @@ MOUNT_TARGET_GROUP_ID=$(aws ec2 create-security-group --group-name $MOUNT_TARGET
 aws ec2 authorize-security-group-ingress --group-id $MOUNT_TARGET_GROUP_ID --protocol tcp --port 2049 --cidr $CIDR_BLOCK
 
 FILE_SYSTEM_ID=$(aws efs create-file-system --throughput-mode bursting --tags Key=Application,Value=eksgdb | jq --raw-output '.FileSystemId')
+
+sleep 60
 
 aws efs describe-file-systems --file-system-id $FILE_SYSTEM_ID
 if [[ $? -ne 0 ]]; then
