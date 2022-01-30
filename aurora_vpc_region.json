@@ -239,7 +239,7 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       CidrBlock: !Sub '10.${ClassB}.80.0/20'
-      AvailabilityZone: !Select [0, !GetAZs ]
+      AvailabilityZone: !Select [1, !GetAZs ]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name

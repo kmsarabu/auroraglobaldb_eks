@@ -33,7 +33,7 @@ fi
 
 myrole=$(eksctl get iamserviceaccount --cluster eksgdbclu --name aws-load-balancer-controller --namespace kube-system -o json | jq '.[].status.roleARN' | awk -F/ '{print $2}' |awk -F\" '{print $1}')
 
-ws iam attach-role-policy \
+aws iam attach-role-policy \
   --role-name ${myrole} \
   --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/AWSLoadBalancerControllerAdditionalIAMPolicy
 

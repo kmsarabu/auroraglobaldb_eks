@@ -3,10 +3,15 @@
 REGION1=us-east-2
 REGION2=us-west-2
 
-kubectl delete services,deployments,statefulsets -n octank
+kubectl delete ingress,services,deployments,statefulsets -n octank --all
 
-eksctl delete cluster --name eksgdbclu -r us-east-2 --force -w
-eksctl delete cluster --name eksgdbclu -r us-west-2 --force -w
+kubectl delete ns octank --cascade=true
+
+eksctl delete iamserviceaccount --name aws-load-balancer-controller --cluster eksgdbclu --namespace kube-system --region $AWS_REGION  
+
+aws iam get-roles 
+eksctl delete cluster --name eksgdbclu -r ${REGION1} --force -w
+eksctl delete cluster --name eksgdbclu -r ${REGION2} --force -w
 
 aws efs delete-file-system --file-system-id=EFS_VOLUME_ID
 
@@ -22,9 +27,8 @@ VPCPEERID=$(aws ec2 describe-vpc-peering-connections --region ${REGION1} --query
 aws ec2 delete-vpc-peering-connection --vpc-peering-connection-id ${VPCPEERID} --region ${REGION1}
 aws ec2 delete-vpc-peering-connection --vpc-peering-connection-id ${VPCPEERID} --region ${REGION2}
 
-aws cloudformation delete-stack --stack-name gdb-managed-ep ${REGION2}
-aws cloudformation delete-stack --stack-name gdb-managed-ep ${REGION1}
-
 aws cloudformation delete-stack --stack-name EKSGDB2 --region ${REGION2}
+# delete IAM role Cloud9DevIAMRole
+
 aws cloudformation delete-stack --stack-name EKSGDB1 --region ${REGION2}
 aws cloudformation delete-stack --stack-name EKSGDB1 --region ${REGION1}
