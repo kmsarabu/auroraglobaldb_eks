@@ -11,7 +11,7 @@ def connect(type="writer"):
     ro_db_name = os.environ['DATABASE_RODB_NAME']
     port = os.environ['DATABASE_PORT']
     db_name = rw_db_name if type == "writer" else ro_db_name
-    return psycopg2.connect(sslmode="require", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
+    return psycopg2.connect(sslmode="prefer", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
 
 class Product:
     def __init__(self, product_name=None):
@@ -58,7 +58,7 @@ class Product:
                          on a.order_id = b.order_id
                         group by item_id
                         ) t
-                       ) t where mrank <= {1} order by cnt desc
+                       ) t where mrank <= {0} order by cnt desc
                       )
                       SELECT id,name,price, description,img_url,'apparels' as category, count(1) review_cnt, round(avg(rating)*20) rating
                       FROM apparels a join items i on i.item_id = a.id 

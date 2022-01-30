@@ -3,7 +3,11 @@
 REGION1="us-east-2"
 REGION2="us-west-2"
 
-Global_Accelerator_Arn=$(aws globalaccelerator create-accelerator --name eksgdb --query "Accelerator.AcceleratorArn" --output text --region us-west-2)
+Global_Accelerator_Arn=$(ws globalaccelerator list-accelerators --region us-west-2 --query 'Accelerators[?(Name == `eksgdb`)].AcceleratorArn' --output text)
+
+if [[ -z ${Global_Accelerator_Arn} ]]; then
+   Global_Accelerator_Arn=$(aws globalaccelerator create-accelerator --name eksgdb --query "Accelerator.AcceleratorArn" --output text --region us-west-2)
+fi
 
 Global_Accelerator_Listerner_Arn=$(aws globalaccelerator create-listener \
   --accelerator-arn $Global_Accelerator_Arn \

@@ -11,7 +11,7 @@ def connect(type="writer"):
     ro_db_name = os.environ['DATABASE_RODB_NAME']
     port = os.environ['DATABASE_PORT']
     db_name = rw_db_name if type == "writer" else ro_db_name
-    return psycopg2.connect(sslmode="require", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
+    return psycopg2.connect(sslmode="prefer", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
 
 class Order:
     def __init__(self, email):

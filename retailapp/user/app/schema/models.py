@@ -14,7 +14,7 @@ def connect():
     ctr = 0
     while ctr <= 60:
        try:
-          return psycopg2.connect(sslmode="require", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
+          return psycopg2.connect(sslmode="prefer", host=rds_host, user=db_user, password=password, dbname=db_name, connect_timeout=10000, port=port, keepalives_interval=30)
        except:
           time.sleep(5)
           ctr = ctr + 1
