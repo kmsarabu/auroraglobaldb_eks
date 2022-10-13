@@ -48,31 +48,31 @@ echo \"${DBUSER}\" \"md5${dbpass1}\" > /tmp/userlist.txt
 dbpass1=`echo -n "${dbpass}${dbuser}" | md5sum | awk '{print $1}'`
 echo \"${dbuser}\" \"md5${dbpass1}\" >> /tmp/userlist.txt
 
-echo "[databases]
-gdbdemo = host=${rwendpoint} port=5432 dbname=eksgdbdemo
-gdbdemo-ro = host=${roendpoint} port=5432 dbname=eksgdbdemo
-[pgbouncer]
-logfile = /tmp/pgbouncer.log
-pidfile = /tmp/pgbouncer.pid
-listen_addr = *
-listen_port = 6432
-auth_type = md5
-auth_file = /etc/pgbouncer/userlist.txt
-auth_user = ${DBUSER}
-stats_users = stats, root, pgbouncer
-pool_mode = transaction
-max_client_conn = 1000
-default_pool_size = 100
-tcp_keepalive = 1
-tcp_keepidle = 1
-tcp_keepintvl = 11
-tcp_keepcnt = 3
-tcp_user_timeout = 12500" > /tmp/pgbouncer.ini
+echo "    [databases]
+    gdbdemo = host=${rwendpoint} port=5432 dbname=eksgdbdemo
+    gdbdemo-ro = host=${roendpoint} port=5432 dbname=eksgdbdemo
+    [pgbouncer]
+    logfile = /tmp/pgbouncer.log
+    pidfile = /tmp/pgbouncer.pid
+    listen_addr = *
+    listen_port = 6432
+    auth_type = md5
+    auth_file = /etc/pgbouncer/userlist.txt
+    auth_user = ${DBUSER}
+    stats_users = stats, root, pgbouncer
+    pool_mode = transaction
+    max_client_conn = 1000
+    default_pool_size = 100
+    tcp_keepalive = 1
+    tcp_keepidle = 1
+    tcp_keepintvl = 11
+    tcp_keepcnt = 3
+    tcp_user_timeout = 12500" > /tmp/pgbouncer.ini
 
-pgbouncerini=`cat  /tmp/pgbouncer.ini | base64 --wrap=0`
+pgbouncerini=`cat  /tmp/pgbouncer.ini`
 userlisttxt=`cat  /tmp/userlist.txt | base64 --wrap=0`
 
-sed -e "s/%pgbouncerini%/$pgbouncerini/g" -e "s/%userlisttxt%/$userlisttxt/g" PgBouncer/pgbouncer_kubernetes.yml > retailapp/eks/pgbouncer_kubernetes.yml
+sed -e "/%pgbouncerini%/r /tmp/pgbouncer.ini" -e "/%pgbouncerini%/d" -e "s/%userlisttxt%/$userlisttxt/g" PgBouncer/pgbouncer_kubernetes.yml > retailapp/eks/pgbouncer_kubernetes.yml
 
 kubectl apply -f retailapp/eks/pgbouncer_kubernetes.yml
 
