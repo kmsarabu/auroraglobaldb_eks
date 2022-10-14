@@ -446,7 +446,7 @@ metadata:
   name: kart
   namespace: octank
   labels:
-    app: octank
+    app: oktank
     service: kart
 spec:
   type: ClusterIP
@@ -465,7 +465,7 @@ metadata:
   name: product
   namespace: octank
   labels:
-    app: octank
+    app: oktank
     service: product
 spec:
   type: ClusterIP
@@ -484,7 +484,7 @@ metadata:
   name: user
   namespace: octank
   labels:
-    app: octank
+    app: oktank
     service: user
 spec:
   type: ClusterIP
@@ -503,7 +503,7 @@ metadata:
   name: order
   namespace: octank
   labels:
-    app: octank
+    app: oktank
     service: order
 spec:
   type: ClusterIP
@@ -522,11 +522,11 @@ metadata:
   name: webappnp
   namespace: octank
   labels:
+    app: oktank
     service: webappnp
 spec:
   type: NodePort
   selector:
-    app: octank
     service: webapp
   ports:
     - port: 80
@@ -539,7 +539,7 @@ metadata:
   name: webapp
   namespace: octank
   labels:
-    app: octank
+    app: oktank
     service: webapp
   annotations:
     kubernetes.io/ingress.class: alb
@@ -581,7 +581,7 @@ spec:
   storageClassName: efs-sc
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: fs-017bce4a1aa0133a1
+    volumeHandle: EFS_VOLUME_ID
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -597,5 +597,5 @@ spec:
   storageClassName: efs-sc
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: fs-017bce4a1aa0133a1
+    volumeHandle: EFS_VOLUME_ID
 ---
