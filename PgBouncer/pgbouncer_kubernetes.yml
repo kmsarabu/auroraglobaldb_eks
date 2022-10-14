@@ -12,8 +12,16 @@ metadata:
   namespace: octank
 type: Opaque
 data:
-        pgbouncer.ini: %pgbouncerini%
-        userlist.txt: %userlisttxt%
+  userlist.txt: %userlisttxt%
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgbconfig
+  namespace: octank
+data:
+  pgbouncer.ini: |
+    %pgbouncerini%
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,7 +51,7 @@ spec:
         ports:
          - containerPort: 6432
         volumeMounts:
-         - name: pgbconfig
+         - name: pgbconfigmap
            subPath: pgbouncer.ini
            mountPath: /etc/pgbouncer/pgbouncer.ini
            readOnly: true
@@ -55,6 +63,9 @@ spec:
         - name: pgbconfig
           secret:
             secretName: pgbconfig
+        - name: pgbconfigmap
+          configMap:
+            name: pgbconfig
 ---
 apiVersion: v1
 kind: Service
