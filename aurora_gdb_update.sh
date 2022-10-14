@@ -9,7 +9,7 @@ cd /tmp
 
 pip3 install kubernetes -t python/
 zip -r kubernetes.zip python  > /dev/null
-aws lambda publish-layer-version --layer-name ${KUBERNETES} --zip-file fileb://kubernetes.zip --compatible-runtimes python3.9 --region ${AWS_REGION}
+aws lambda publish-layer-version --layer-name ${LAYER_NAME} --zip-file fileb://kubernetes.zip --compatible-runtimes python3.9 --region ${AWS_REGION}
 
 layer_arn=$(aws lambda  get-layer-version --layer-name ${LAYER_NAME} --version-number 1 | jq -r .LayerVersionArn)
 echo ${layer_arn}
