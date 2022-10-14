@@ -13,7 +13,7 @@ aws iam get-roles
 eksctl delete cluster --name eksgdbclu -r ${REGION1} --force -w
 eksctl delete cluster --name eksgdbclu -r ${REGION2} --force -w
 
-aws efs delete-file-system --file-system-id=fs-017bce4a1aa0133a1
+aws efs delete-file-system --file-system-id=EFS_VOLUME_ID
 
 aws iam delete-policy k8s-asg-policy
 
