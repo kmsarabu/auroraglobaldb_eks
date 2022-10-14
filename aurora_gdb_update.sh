@@ -32,8 +32,10 @@ lambda_arn=$(aws lambda get-function --function-name ${LAMBDA_NAME} | jq -r .Con
 echo ${lambda_arn}
 
 aws events put-rule --name ${EVENT_NAME} --event-pattern "{\"detail-type\": [\"RDS DB Cluster Event\"],\"source\": [\"aws.rds\"],\"detail\": {\"EventCategories\": [\"global-failover\"],\"EventID\": [\"RDS-EVENT-0185\"]}}" 
-
 aws events put-targets --rule ${EVENT_NAME} --targets "Id"="1","Arn"="${lambda_arn}"
+rule_arn=$(aws events describe-rule --name AuroraGDBPgbouncerUpdate | jq -r .Arn)
+
+aws lambda add-permission --function-name ${LAMBDA_NAME} --statement-id auroraglobal-scheduled-event --action 'lambda:InvokeFunction' --principal events.amazonaws.com --source-arn ${rule_arn}
 
 ROLE="    - rolearn: ${lambda_role_arn}\n      username: lambda\n      groups:\n        - system:masters"
 kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"$ROLE\";next}1" > /tmp/aws-auth-patch.yml
