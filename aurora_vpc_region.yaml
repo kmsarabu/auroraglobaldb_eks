@@ -638,41 +638,221 @@ Resources:
   # Cloud 9 Setup
   #---------------------------------------------------------------------------------------
 
-  Cloud9DevIAMRole:
-    Condition: createResource
-    Type: 'AWS::IAM::Role'
+  C9Role:
+    Type: AWS::IAM::Role
     Properties:
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      Tags:
+        - Key: Environment
+          Value: AuroraGlobal
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: 'sts:AssumeRole'
-      Path: /
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+            - ssm.amazonaws.com
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+      Path: "/"
 
-  Cloud9InstanceProfile:
+  C9LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName:
+          Fn::Join:
+          - ''
+          - - C9LambdaPolicy-
+            - Ref: AWS::Region
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - cloudformation:DescribeStacks
+            - cloudformation:DescribeStackEvents
+            - cloudformation:DescribeStackResource
+            - cloudformation:DescribeStackResources
+            - ec2:DescribeInstances
+            - ec2:AssociateIamInstanceProfile
+            - ec2:ModifyInstanceAttribute
+            - ec2:ReplaceIamInstanceProfileAssociation
+            - iam:ListInstanceProfiles
+            - iam:PassRole
+            Resource: "*"
+
+  C9BootstrapInstanceLambda:
+    Description: Bootstrap Cloud9 instance
+    Type: Custom::C9BootstrapInstanceLambda
+    DependsOn:
+    - C9BootstrapInstanceLambdaFunction
+    - C9Instance
+    - C9InstanceProfile
+    - C9LambdaExecutionRole
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AuroraGlobal
+      ServiceToken:
+        Fn::GetAtt:
+        - C9BootstrapInstanceLambdaFunction
+        - Arn
+      REGION:
+        Ref: AWS::Region
+      StackName:
+        Ref: AWS::StackName
+      EnvironmentId:
+        Ref: C9Instance
+      LabIdeInstanceProfileName:
+        Ref: C9InstanceProfile
+      LabIdeInstanceProfileArn:
+        Fn::GetAtt:
+        - C9InstanceProfile
+        - Arn
+
+  C9BootstrapInstanceLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AuroraGlobal
+      Handler: index.lambda_handler
+      Role:
+        Fn::GetAtt:
+        - C9LambdaExecutionRole
+        - Arn
+      Runtime: python3.9
+      MemorySize: 2056
+      Timeout: '600'
+      Code:
+        ZipFile: |
+          from __future__ import print_function
+          import boto3
+          import json
+          import os
+          import time
+          import traceback
+          import cfnresponse
+          import logging
+          def lambda_handler(event, context):
+              print('event: {}'.format(event))
+              print('context: {}'.format(context))
+              responseData = {}
+              if event['RequestType'] == 'Create':
+                  try:
+                      # Open AWS clients
+                      ec2 = boto3.client('ec2')
+                      # Get the InstanceId of the Cloud9 IDE
+                      instance = ec2.describe_instances(Filters=[{'Name': 'tag:Name','Values': ['aws-cloud9-'+event['ResourceProperties']['StackName']+'-'+event['ResourceProperties']['EnvironmentId']]}])['Reservations'][0]['Instances'][0]
+                      logging.info('instance: {}'.format(instance))
+                      # Create the IamInstanceProfile request object
+                      iam_instance_profile = {
+                          'Arn': event['ResourceProperties']['LabIdeInstanceProfileArn'],
+                          'Name': event['ResourceProperties']['LabIdeInstanceProfileName']
+                      }
+                      logging.info('iam_instance_profile: {}'.format(iam_instance_profile))
+                      # Wait for Instance to become ready before adding Role
+                      instance_state = instance['State']['Name']
+                      logging.info('instance_state: {}'.format(instance_state))
+                      while instance_state != 'running':
+                          time.sleep(5)
+                          instance_state = ec2.describe_instances(InstanceIds=[instance['InstanceId']])
+                          logging.info('instance_state: {}'.format(instance_state))
+                      # attach instance profile
+                      response = ec2.associate_iam_instance_profile(IamInstanceProfile=iam_instance_profile, InstanceId=instance['InstanceId'])
+                      logging.info('response - associate_iam_instance_profile: {}'.format(response))
+                      r_ec2 = boto3.resource('ec2')
+                      responseData = {'Success': 'Started bootstrapping for instance: '+instance['InstanceId']}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, 'CustomResourcePhysicalID')
+                  except Exception as e:
+                      logging.error(e, exc_info=True)
+                      responseData = {'Error': str(traceback.format_exc(e))}
+                      cfnresponse.send(event, context, cfnresponse.FAILED, responseData, 'CustomResourcePhysicalID')
+  C9OutputBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+
+  C9Bootstrap:
+    Type: AWS::SSM::Document
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: AuroraGlobal
+      Content: Yaml
+      DocumentType: Command
+      Content:
+        schemaVersion: '2.2'
+        description: Bootstrap cloud9 for installing redisclient and other required libraries
+        mainSteps:
+        - action: aws:runShellScript
+          name: BootstrapTools
+          inputs:
+            runCommand:
+            - "#!/bin/bash"
+            - echo "Bootstrap completed with return code $?"
+
+  C9BootstrapAssociation:
+    Type: AWS::SSM::Association
+    DependsOn: C9OutputBucket
+    Properties:
+      Name: !Ref C9Bootstrap
+      OutputLocation:
+        S3Location:
+          OutputS3BucketName: !Ref C9OutputBucket
+          OutputS3KeyPrefix: bootstrapoutput
+      Targets:
+        - Key: tag:SSMBootstrap
+          Values:
+          - Active
+  C9InstanceProfile:
     Type: AWS::IAM::InstanceProfile
-    Properties: 
-      InstanceProfileName: cloud9InstanceProfile
-      Path: /
-      Roles: 
-       - !Ref Cloud9DevIAMRole
-  
-  Cloud9IDE:
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: C9Role
+
+  C9Instance:
+    Description: "-"
+    DependsOn: C9BootstrapAssociation
     Type: AWS::Cloud9::EnvironmentEC2
     Properties:
-      Name: !Sub '${AWS::StackName}-CL9IDE'
+      Name: !Sub '${AWS::StackName}'
       AutomaticStopTimeMinutes: 60
-      Description: "AWS Cloud9 instance accessible using AWS Systems Manager"
-      Repositories:
-          - RepositoryUrl: https://github.com/kmsarabu/auroraglobaldb_eks.git
-            PathComponent: auroraglobaldb_eks
+      Description: AWS Cloud9 instance for AuroraGlobal
       InstanceType: !Ref C9InstanceType
       ImageId: amazonlinux-2-x86_64
       SubnetId: !Ref SubnetAPublic
+      Repositories:
+          - RepositoryUrl: https://github.com/kmsarabu/auroraglobaldb_eks.git
+            PathComponent: auroraglobaldb_eks
+      Tags:
+        -
+          Key: SSMBootstrap
+          Value: Active
+        -
+          Key: Environment
+          Value: AuroraGlobal
+
 
 Outputs:
   TemplateID:
@@ -790,11 +970,11 @@ Outputs:
     Value: !Join
       - ''
       - - !Sub https://${AWS::Region}.console.aws.amazon.com/cloud9/ide/
-        - !Ref Cloud9IDE
+        - !Ref C9Instance
 
   Cloud9Role:
     Condition: createResource
-    Value: !Ref Cloud9DevIAMRole
+    Value: !Ref C9Role
     Export:
       Name:
         'Fn::Sub': '${AWS::StackName}-Cloud9Role'
