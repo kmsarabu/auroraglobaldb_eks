@@ -260,7 +260,7 @@ spec:
                  key: authtoken
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: webapp
   namespace: octank
@@ -269,7 +269,6 @@ metadata:
     service: webapp
 spec:
   replicas: 2
-  serviceName: webapp
   selector:
     matchLabels:
       app: octank
@@ -290,8 +289,8 @@ spec:
         ports:
          - containerPort: 8443
         volumeMounts:
-        - name: efs-data
-          mountPath: /appdata
+           - mountPath: /appdata
+             name: data
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -354,15 +353,10 @@ spec:
                  name: octank-secret
                  key: order_service
       restartPolicy: Always
-  volumeClaimTemplates:
-  - metadata:
-      name: efs-data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: efs-sc
-      resources:
-        requests:
-          storage: 1Gi
+      volumes:
+        - name: data
+          emptyDir: {}
+      
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -566,36 +560,4 @@ spec:
             name: webappnp
             port:
               number: 80
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: efs-pv1
-spec:
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs-sc
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: EFS_VOLUME_ID
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: efs-pv2
-spec:
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs-sc
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: EFS_VOLUME_ID
----
+
