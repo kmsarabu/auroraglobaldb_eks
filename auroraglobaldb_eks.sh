@@ -205,15 +205,15 @@ function deploy_vpc_c9()
 {
 
     print_line
-    echo "Deploying the VPC and C9 environment"
+    echo "Deploying VPC and C9 environment"
     print_line
 
-    aws cloudformation create-stack 
+    aws cloudformation create-stack \
          --stack-name EKSGDB1 \
          --disable-rollback \
          --template-body file://${CFN_VPC_C9} \
          --tags Key=Environment,Value=EKSGDB \
-         --timeout-in-minutes=30 
+         --timeout-in-minutes=30 \
          --region ${REGION1} \
          --capabilities "CAPABILITY_IAM" \
          --parameters ParameterKey=DeployAurora,ParameterValue=true ParameterKey=ClassB,ParameterValue=40
@@ -223,11 +223,11 @@ function deploy_vpc_c9()
         exit 1
     fi
 
-    aws cloudformation create-stack 
+    aws cloudformation create-stack \
          --stack-name EKSGDB1 \
-         --template-body file://${CFN_C9} \
+         --template-body file://${CFN_VPC_C9} \
          --tags Key=Environment,Value=EKSGDB \
-         --timeout-in-minutes=30 
+         --timeout-in-minutes=30 \
          --region ${REGION2} \
          --capabilities "CAPABILITY_IAM" \
          --parameters ParameterKey=DeployAurora,ParameterValue=false ParameterKey=ClassB,ParameterValue=50
@@ -240,11 +240,11 @@ function deploy_vpc_c9()
     wait_for_stack_to_complete "EKSGDB1" "${REGION1}"
     wait_for_stack_to_complete "EKSGDB1" "${REGION2}"
 
-    aws cloudformation create-stack 
+    aws cloudformation create-stack \
       --stack-name EKSGDB2 \
       --template-body file://${CFN_AURORADB} \
       --tags Key=Environment,Value=EKSGDB \
-      --timeout-in-minutes=30 
+      --timeout-in-minutes=30  \
       --region ${REGION2}
 
     if [[ $? -ne 0 ]]; then
@@ -256,7 +256,6 @@ function deploy_vpc_c9()
 
     echo "Completed deloying the CloudFormation Stacks on regions us-east-2 and us-west-2"
     print_line
-    update_routes
 
 }
 
@@ -321,8 +320,8 @@ function update_routes()
 function install_pgbouncer()
 {
 
-    export PGB_K8S=${BASE}/pgbouncer/pgbouncer_kubernetes.yaml
-    export PGB_APP=${BASE}/retailapp/pgbouncer_kubernetes.yaml
+    export PGB_K8S=pgbouncer/pgbouncer_kubernetes.yaml
+    export PGB_APP=retailapp/pgbouncer_kubernetes.yaml
     export PGB_USERLIST=/tmp/userlist.txt
     export PGB_CONF=/tmp/pgbouncer.ini
 
@@ -409,9 +408,9 @@ function configure_pgb_lambda()
     LAYER_NAME="kubernetes"
     LAMBDA_NAME="AuroraGDBPgbouncerUpdate"
     EVENT_NAME=${LAMBDA_NAME}
-    K8S_LAMBDA_BINDING=${BASE}/pgbouncer/pgbouncer_lambda_role_binding.yaml
+    K8S_LAMBDA_BINDING=pgbouncer/pgbouncer_lambda_role_binding.yaml
     LAMBDA_CODE="pgbouncer_lambda.py"
-    LAMBDA_DIR=${BASE}/pgbouncer
+    LAMBDA_DIR=pgbouncer
 
     current_dir=`pwd`
     cd /tmp
@@ -525,35 +524,44 @@ function install_metric_server()
 
 
 function set_env()
-{
-    export BASE="~environment/auroraglobaldb_eks"
+{ 
+    print_line
+    echo "Setting up the base environment variables"
+    print_line
     export EKS_CFN_FILE=eks_cluster.yaml
     export EKS_STACK_NAME=auroragdbeks
     export INSTANCE_ROLE="C9Role"
     export EKS_NAMESPACE="kube-system"
     export REGION1="us-east-2"
     export REGION2="us-west-2"
-    export CFN_VPC_C9=${BASE}/aurora_vpc_region.yaml
-    export CFN_AURORADB=${BASE}/aurora_gdb.yaml
-    export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+    export CFN_VPC_C9=cfn/aurora_vpc_region.yaml
+    export CFN_AURORADB=cfn/aurora_gdb.yaml
+    if [ -z ${AWS_REGION} ] ; then
+         export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
+    fi
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text) 
+    print_line
 }
 
 function set_env_from_cfn()
 {
-
+    print_line
+    echo "Setting up the CloudFormation variables"
+    print_line
     export EKS_CLUSTER_NAME=$(aws cloudformation describe-stacks --region ${AWS_REGION} --query "Stacks[].Outputs[?(OutputKey == 'EKSClusterName')][].{OutputValue:OutputValue}" --output text)
     export vpcid=$(aws cloudformation describe-stacks --region ${AWS_REGION} --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
     export subnets=$(aws ec2 describe-subnets --region ${AWS_REGION} --filters Name=vpc-id,Values=${vpcid} --query 'Subnets[?(! MapPublicIpOnLaunch)].{SubnetId:SubnetId}' --output text)
     export subnetA=`echo "${subnets}" |head -1 | tail -1`
     export subnetB=`echo "${subnets}" |head -2 | tail -1`
     export subnetC=`echo "${subnets}" |head -3 | tail -1`
+    print_line
 }
 
 
 if [ "x${1}" == "xsetup_env" ] ; then
     set_env
     deploy_vpc_c9
+    update_routes
     exit
 fi
 
