@@ -259,7 +259,7 @@ function deploy_vpc_c9()
 
     wait_for_stack_to_complete "EKSGDB2" "${REGION2}"
 
-    echo "Completed deloying the CloudFormation Stacks on regions us-east-2 and us-west-2"
+    echo "Completed deloying the CloudFormation Stacks on regions us-east-2 and ${REGION2}"
     print_line
 
 }
@@ -529,6 +529,55 @@ function install_metric_server()
 }
 
 
+function create_global_accelerator()
+{
+
+    Global_Accelerator_Arn=$(aws globalaccelerator list-accelerators --region ${REGION2} --query 'Accelerators[?(Name == `eksgdb`)].AcceleratorArn' --output text)
+
+    if [[ -z ${Global_Accelerator_Arn} ]]; then
+       Global_Accelerator_Arn=$(aws globalaccelerator create-accelerator --name eksgdb --query "Accelerator.AcceleratorArn" --output text --region ${REGION2})
+    fi
+
+    Global_Accelerator_Listerner_Arn=$(aws globalaccelerator create-listener \
+      --accelerator-arn $Global_Accelerator_Arn \
+      --region ${REGION2} \
+      --protocol TCP \
+      --port-ranges FromPort=80,ToPort=80 \
+      --query "Listener.ListenerArn" \
+      --output text)
+
+
+    lname=$(aws elbv2 describe-load-balancers --region $REGION1 --query 'LoadBalancers[?contains(DNSName, `webapp`)].LoadBalancerArn' --output text)
+    EndpointGroupArn_1=$(aws globalaccelerator create-endpoint-group \
+      --region ${REGION2} \
+      --listener-arn $Global_Accelerator_Listerner_Arn \
+      --endpoint-group-region ${REGION1} \
+      --query "EndpointGroup.EndpointGroupArn" \
+      --output text \
+      --endpoint-configurations EndpointId=$lname,Weight=128,ClientIPPreservationEnabled=True) 
+
+    lname=$(aws elbv2 describe-load-balancers --region $REGION2 --query 'LoadBalancers[?contains(DNSName, `webapp`)].LoadBalancerArn' --output text)
+    EndpointGroupArn_2=$(aws globalaccelerator create-endpoint-group \
+      --region ${REGION2} \
+      --traffic-dial-percentage 0 \
+      --listener-arn $Global_Accelerator_Listerner_Arn \
+      --endpoint-group-region $REGION2 \
+      --query "EndpointGroup.EndpointGroupArn" \
+      --output text \
+      --endpoint-configurations EndpointId=$lname,Weight=128,ClientIPPreservationEnabled=True) 
+
+    WEBAPP_GADNS=$(aws globalaccelerator describe-accelerator \
+      --accelerator-arn $Global_Accelerator_Arn \
+      --query "Accelerator.DnsName" \
+      --output text --region ${REGION2})
+
+    export WEBAPP_GADNS
+    echo $WEBAPP_GADNS
+
+
+}
+
+
 function set_env()
 { 
     print_line
@@ -577,6 +626,13 @@ if [ "x${1}" == "xsetup_env" ] ; then
     exit
 fi
 
+if [ "x${1}" == "global-accelerator" ] ; then
+    set_env
+    set_env_from_c9_cfn
+    create_global_accelerator
+    exit
+fi
+
 set_env
 set_env_from_c9_cfn
 
@@ -599,3 +655,4 @@ install_metric_server
 install_pgbouncer
 configure_pgb_lambda
 
+create_global_accelerator
