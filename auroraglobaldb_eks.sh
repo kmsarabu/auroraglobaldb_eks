@@ -5,22 +5,27 @@ function print_line()
     echo "---------------------------------"
 }
 
+function install_jq()
+{
+    sudo yum install -y jq  > ${TERM1} 2>&1
+
+}
+
 function install_packages()
 {
-    sudo yum install -y jq  > ${TERM} 2>&1
     print_line
     echo "Installing aws cli v2"
     print_line
+    current_dir=`pwd`
     aws --version | grep aws-cli\/2 > /dev/null 2>&1
     if [ $? -eq 0 ] ; then
         cd $current_dir
 	return
     fi
-    current_dir=`pwd`
     cd /tmp
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" > ${TERM} 2>&1
-    unzip -o awscliv2.zip > ${TERM} 2>&1
-    sudo ./aws/install --update > ${TERM} 2>&1
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" > ${TERM1} 2>&1
+    unzip -o awscliv2.zip > ${TERM1} 2>&1
+    sudo ./aws/install --update > ${TERM1} 2>&1
     cd $current_dir
 }
 
@@ -29,19 +34,19 @@ function install_k8s_utilities()
     print_line
     echo "Installing Kubectl"
     print_line
-    sudo curl -o /usr/local/bin/kubectl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"  > ${TERM} 2>&1
-    sudo chmod +x /usr/local/bin/kubectl > ${TERM} 2>&1
+    sudo curl -o /usr/local/bin/kubectl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"  > ${TERM1} 2>&1
+    sudo chmod +x /usr/local/bin/kubectl > ${TERM1} 2>&1
     print_line
     echo "Installing eksctl"
     print_line
-    curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp > ${TERM} 2>&1
+    curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp > ${TERM1} 2>&1
     sudo mv /tmp/eksctl /usr/local/bin
     sudo chmod +x /usr/local/bin/eksctl
     print_line
     echo "Installing helm"
     print_line
-    curl -s https://fluxcd.io/install.sh | sudo bash > ${TERM} 2>&1
-    curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash > ${TERM} 2>&1
+    curl -s https://fluxcd.io/install.sh | sudo bash > ${TERM1} 2>&1
+    curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash > ${TERM1} 2>&1
 
 }
 
@@ -50,7 +55,7 @@ function install_postgresql()
     print_line
     echo "Installing Postgresql client"
     print_line
-    sudo amazon-linux-extras install -y postgresql13 > ${TERM} 2>&1
+    sudo amazon-linux-extras install -y postgresql13 > ${TERM1} 2>&1
     sudo yum -y install postgresql-contrib postgresql-devel
 }
 
@@ -395,7 +400,7 @@ function install_pgbouncer()
 
     sed -e "/%pgbouncerini%/r /tmp/pgbouncer.ini" -e "/%pgbouncerini%/d" -e "s/%userlisttxt%/$userlisttxt/g" ${PGB_K8S} > ${PGB_APP}
 
-    kubectl apply -f ${PG_APP}
+    kubectl apply -f ${PGB_APP}
 
 }
 
@@ -413,6 +418,7 @@ function configure_pgb_lambda()
     LAMBDA_DIR=pgbouncer
 
     current_dir=`pwd`
+    rm -rf /tmp/python
     cd /tmp
 
     pip3 install kubernetes -t python/
@@ -434,7 +440,7 @@ function configure_pgb_lambda()
     lambda_role_arn=$(aws iam get-role --role-name ${LAMBDA_ROLE} | jq -r .Role.Arn)
     sleep 5
 
-    aws lambda create-function --reegion ${AWS_REGION} --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler aurora_gdb_update.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600 
+    aws lambda create-function --region ${AWS_REGION} --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler aurora_gdb_update.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600 
 
     lambda_arn=$(aws lambda get-function --function-name ${LAMBDA_NAME} | jq -r .Configuration.FunctionArn)
 echo ${lambda_arn}
@@ -459,9 +465,8 @@ function install_cluster_auto_scaler()
     print_line
     echo "Installing Auto Scaler configuration" 
     print_line
-    mkdir ~/environment/cluster-autoscaler
 
-    cat <<EoF > ~/environment/cluster-autoscaler/k8s-asg-policy.json
+    cat <<EoF > /tmp/k8s-asg-policy.json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -473,7 +478,8 @@ function install_cluster_auto_scaler()
                 "autoscaling:DescribeTags",
                 "autoscaling:SetDesiredCapacity",
                 "autoscaling:TerminateInstanceInAutoScalingGroup",
-                "ec2:DescribeLaunchTemplateVersions"
+                "ec2:DescribeLaunchTemplateVersions",
+                "ec2:DescribeInstanceTypes"
             ],
             "Resource": "*",
             "Effect": "Allow"
@@ -482,7 +488,7 @@ function install_cluster_auto_scaler()
 }
 EoF
 
-    aws iam create-policy --policy-name k8s-asg-policy  --policy-document file://~/environment/cluster-autoscaler/k8s-asg-policy.json
+    aws iam create-policy --policy-name k8s-asg-policy  --policy-document file:///tmp/k8s-asg-policy.json
 
     eksctl create iamserviceaccount \
         --name cluster-autoscaler \
@@ -528,7 +534,8 @@ function set_env()
     print_line
     echo "Setting up the base environment variables"
     print_line
-    export EKS_CFN_FILE=eks_cluster.yaml
+    install_jq
+    export EKS_CFN_FILE=cfn/eks_cluster.yaml
     export EKS_STACK_NAME=auroragdbeks
     export INSTANCE_ROLE="C9Role"
     export EKS_NAMESPACE="kube-system"
@@ -543,12 +550,11 @@ function set_env()
     print_line
 }
 
-function set_env_from_cfn()
+function set_env_from_c9_cfn()
 {
     print_line
     echo "Setting up the CloudFormation variables"
     print_line
-    export EKS_CLUSTER_NAME=$(aws cloudformation describe-stacks --region ${AWS_REGION} --query "Stacks[].Outputs[?(OutputKey == 'EKSClusterName')][].{OutputValue:OutputValue}" --output text)
     export vpcid=$(aws cloudformation describe-stacks --region ${AWS_REGION} --stack-name EKSGDB1 --query 'Stacks[].Outputs[?(OutputKey == `VPC`)][].{OutputValue:OutputValue}' --output text)
     export subnets=$(aws ec2 describe-subnets --region ${AWS_REGION} --filters Name=vpc-id,Values=${vpcid} --query 'Subnets[?(! MapPublicIpOnLaunch)].{SubnetId:SubnetId}' --output text)
     export subnetA=`echo "${subnets}" |head -1 | tail -1`
@@ -557,6 +563,12 @@ function set_env_from_cfn()
     print_line
 }
 
+function set_env_from_k8s_cfn()
+{
+    export EKS_CLUSTER_NAME=$(aws cloudformation describe-stacks --region ${AWS_REGION} --query "Stacks[].Outputs[?(OutputKey == 'EKSClusterName')][].{OutputValue:OutputValue}" --output text)
+}
+
+export TERM1="/dev/null"
 
 if [ "x${1}" == "xsetup_env" ] ; then
     set_env
@@ -566,22 +578,24 @@ if [ "x${1}" == "xsetup_env" ] ; then
 fi
 
 set_env
-set_env_from_cfn
+set_env_from_c9_cfn
 
-# Installing utilities
-install_packages
-install_k8_utilities
-install_postgresql
-chk_installation
+## Installing utilities
+#install_packages
+#install_k8s_utilities
+#install_postgresql
+#chk_installation
 
-chk_cloud9_permission
-create_eks_cluster
+#chk_cloud9_permission
+#create_eks_cluster
+set_env_from_k8s_cfn
+
 update_config
 update_eks
-install_loadbalancer
-install_cluster_auto_scaler
-install_metric_server
+#install_loadbalancer
+#install_cluster_auto_scaler
+#install_metric_server
 
-install_pgbouncer
+#install_pgbouncer
 configure_pgb_lambda
 
