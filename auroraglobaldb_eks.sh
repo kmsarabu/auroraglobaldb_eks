@@ -581,21 +581,21 @@ set_env
 set_env_from_c9_cfn
 
 ## Installing utilities
-#install_packages
-#install_k8s_utilities
-#install_postgresql
-#chk_installation
+install_packages
+install_k8s_utilities
+install_postgresql
+chk_installation
 
-#chk_cloud9_permission
-#create_eks_cluster
+chk_cloud9_permission
+create_eks_cluster
 set_env_from_k8s_cfn
 
 update_config
 update_eks
-#install_loadbalancer
-#install_cluster_auto_scaler
-#install_metric_server
+install_loadbalancer
+install_cluster_auto_scaler
+install_metric_server
 
-#install_pgbouncer
+install_pgbouncer
 configure_pgb_lambda
 
