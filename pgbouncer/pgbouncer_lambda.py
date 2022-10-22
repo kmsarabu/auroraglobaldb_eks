@@ -11,8 +11,9 @@ import time
 from botocore.signers import RequestSigner 
 
 # Configure your cluster name and region here
+global CLUSTER_NAME
+
 KUBE_FILEPATH = '/tmp/kubeconfig'
-CLUSTER_NAME = 'eksgdbclu'
 AURORA_GDB_NAME = ''
 REGION = os.environ['AWS_REGION']
 K8S_NAMESPACE='octank'
@@ -158,9 +159,26 @@ def restart_deployment(v1_apps):
     }
     v1_apps.patch_namespaced_deployment(K8S_DEPLOYMENT, K8S_NAMESPACE, body, pretty='true')
 
-    
+
+def get_cluster_name():
+
+    cluster_name = None
+    client = boto3.client("cloudformation", region_name=REGION)
+    response = client.describe_stacks()
+    for stack in response['Stacks']:
+        stackout = [] if not stack.get('Outputs') else stack.get('Outputs')
+        for output in stackout:
+            if output['OutputKey'] == 'EKSClusterName' :
+                cluster_name = output['OutputValue']
+                break
+    return cluster_name
+
 def lambda_handler(event, context):
     
+    global CLUSTER_NAME
+
+    CLUSTER_NAME=get_cluster_name()
+    print("EKS clustername : {}".format(CLUSTER_NAME))
     aurora_cluster_ep = get_aurora_cluster_ep(REGION)
     print("Aurora cluster endpoint is {}".format(aurora_cluster_ep))
     

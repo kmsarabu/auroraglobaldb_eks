@@ -433,14 +433,15 @@ function configure_pgb_lambda()
     cd ${current_dir}
 
     aws iam create-role --role-name ${LAMBDA_ROLE} --assume-role-policy-document '{"Version": "2012-10-17","Statement": [{ "Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}'
+
     aws iam attach-role-policy --role-name ${LAMBDA_ROLE} --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-    aws iam put-role-policy --role-name ${LAMBDA_ROLE} --policy-name lambda_rds_policy --policy-document  '{"Version": "2012-10-17","Statement": [{ "Action": ["sts:GetCallerIdentity","eks:DescribeCluster","rds:DescribeDBClusters"],"Effect": "Allow","Resource": "*"}]}'
+    aws iam put-role-policy --role-name ${LAMBDA_ROLE} --policy-name lambda_rds_policy --policy-document  '{"Version": "2012-10-17","Statement": [{ "Action": ["sts:GetCallerIdentity","eks:DescribeCluster","rds:DescribeDBClusters", "cloudformation:DescribeStacks"],"Effect": "Allow","Resource": "*"}]}'
 
     lambda_role_arn=$(aws iam get-role --role-name ${LAMBDA_ROLE} | jq -r .Role.Arn)
     sleep 5
 
-    aws lambda create-function --region ${AWS_REGION} --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler aurora_gdb_update.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600 
+    aws lambda create-function --region ${AWS_REGION} --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler pgbouncer_lambda.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600 
 
     lambda_arn=$(aws lambda get-function --function-name ${LAMBDA_NAME} | jq -r .Configuration.FunctionArn)
 echo ${lambda_arn}
@@ -532,6 +533,11 @@ function install_metric_server()
 function create_global_accelerator()
 {
 
+    if [ ${AWS_REGION} == ${REGION1} ] ; then
+        # Creating the Global accelerator from the REGION2
+        return
+    fi
+
     Global_Accelerator_Arn=$(aws globalaccelerator list-accelerators --region ${REGION2} --query 'Accelerators[?(Name == `eksgdb`)].AcceleratorArn' --output text)
 
     if [[ -z ${Global_Accelerator_Arn} ]]; then
@@ -566,12 +572,11 @@ function create_global_accelerator()
       --output text \
       --endpoint-configurations EndpointId=$lname,Weight=128,ClientIPPreservationEnabled=True) 
 
-    WEBAPP_GADNS=$(aws globalaccelerator describe-accelerator \
+    export WEBAPP_GADNS=$(aws globalaccelerator describe-accelerator \
       --accelerator-arn $Global_Accelerator_Arn \
       --query "Accelerator.DnsName" \
       --output text --region ${REGION2})
 
-    export WEBAPP_GADNS
     echo $WEBAPP_GADNS
 
 
@@ -619,17 +624,33 @@ function set_env_from_k8s_cfn()
 
 export TERM1="/dev/null"
 
-if [ "x${1}" == "xsetup_env" ] ; then
+if [ "X${1}" == "Xsetup_env" ] ; then
+    print_line
+    echo "Setting up initial environment"
+    print_line
     set_env
     deploy_vpc_c9
     update_routes
     exit
 fi
 
-if [ "x${1}" == "global-accelerator" ] ; then
+if [ "X${1}" == "Xglobal-accelerator" ] ; then
+    print_line
+    echo "Setting up Global Accelerator"
+    print_line
     set_env
     set_env_from_c9_cfn
     create_global_accelerator
+    exit
+fi
+
+if [ "X${1}" == "Xconfigure-pgb" ] ; then
+    print_line
+    echo "Configuration Lambda function for pgbouncer"
+    print_line
+    set_env
+    set_env_from_c9_cfn
+    configure_pgb_lambda
     exit
 fi
 
