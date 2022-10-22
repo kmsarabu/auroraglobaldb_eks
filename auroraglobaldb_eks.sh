@@ -441,7 +441,7 @@ function configure_pgb_lambda()
     lambda_role_arn=$(aws iam get-role --role-name ${LAMBDA_ROLE} | jq -r .Role.Arn)
     sleep 5
 
-    aws lambda create-function --region ${AWS_REGION} --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler pgbouncer_lambda.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600 
+    aws lambda create-function --region ${AWS_REGION} --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler pgbouncer_lambda.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600  > /dev/null 2>&1
 
     lambda_arn=$(aws lambda get-function --function-name ${LAMBDA_NAME} | jq -r .Configuration.FunctionArn)
 echo ${lambda_arn}
