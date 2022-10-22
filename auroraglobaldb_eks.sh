@@ -282,7 +282,7 @@ function update_routes()
     --peer-region ${REGION2}
 
     VPCPEERID=$(aws ec2 describe-vpc-peering-connections --region ${REGION1} --query "VpcPeeringConnections[?(RequesterVpcInfo.VpcId == '${VPCID1}')].VpcPeeringConnectionId" --output text)
-
+    sleep 30 
     aws ec2 accept-vpc-peering-connection --vpc-peering-connection-id ${VPCPEERID} --region ${REGION2}
 
     query="RouteTables[?(VpcId == '${VPCID1}')].RouteTableId"
@@ -682,5 +682,3 @@ install_metric_server
 
 install_pgbouncer
 configure_pgb_lambda
-
-#create_global_accelerator
