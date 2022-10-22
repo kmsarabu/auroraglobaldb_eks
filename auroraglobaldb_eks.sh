@@ -364,7 +364,7 @@ function install_pgbouncer()
 
     if [[ $runscript -eq 1 ]]; then
         export PGPASSWORD=$dbpass
-        psql -h $rwendpoint -U $dbuser -p 5432 -d postgres -f setup_schema.sql
+        psql -h $rwendpoint -U $dbuser -p 5432 -d postgres -f sql/setup_schema.sql
     fi
 
     DBUSER=dbuser1
@@ -545,14 +545,20 @@ function create_global_accelerator()
        Global_Accelerator_Arn=$(aws globalaccelerator create-accelerator --name eksgdb --query "Accelerator.AcceleratorArn" --output text --region ${REGION2})
     fi
 
-    Global_Accelerator_Listerner_Arn=$(aws globalaccelerator create-listener \
-      --accelerator-arn $Global_Accelerator_Arn \
-      --region ${REGION2} \
-      --protocol TCP \
-      --port-ranges FromPort=80,ToPort=80 \
-      --query "Listener.ListenerArn" \
-      --output text)
+    echo "Global Accelerator ARN : ${Global_Accelerator_Arn}"
 
+    Global_Accelerator_Listerner_Arn=$(aws globalaccelerator list-listeners --accelerator-arn ${Global_Accelerator_Arn} --query 'Listeners[].ListenerArn' --output text)
+    if [[ -z ${Global_Accelerator_Listerner_Arn} ]]; then
+        Global_Accelerator_Listerner_Arn=$(aws globalaccelerator create-listener \
+          --accelerator-arn $Global_Accelerator_Arn \
+          --region ${REGION2} \
+          --protocol TCP \
+          --port-ranges FromPort=80,ToPort=80 \
+          --query "Listener.ListenerArn" \
+          --output text)
+    fi
+
+    echo "Global Accelerator Listener ARN : ${Global_Accelerator_Listerner_Arn}"
 
     lname=$(aws elbv2 describe-load-balancers --region $REGION1 --query 'LoadBalancers[?contains(DNSName, `webapp`)].LoadBalancerArn' --output text)
     EndpointGroupArn_1=$(aws globalaccelerator create-endpoint-group \
@@ -677,4 +683,4 @@ install_metric_server
 install_pgbouncer
 configure_pgb_lambda
 
-create_global_accelerator
+#create_global_accelerator
