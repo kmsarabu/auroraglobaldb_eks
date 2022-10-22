@@ -534,6 +534,7 @@ function create_global_accelerator()
 {
 
     if [ ${AWS_REGION} == ${REGION1} ] ; then
+	echo "Skipping the configuration of Global Accelerator in the Primary region"
         # Creating the Global accelerator from the REGION2
         return
     fi
