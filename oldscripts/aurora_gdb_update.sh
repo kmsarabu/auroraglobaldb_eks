@@ -26,6 +26,8 @@ aws iam put-role-policy --role-name ${LAMBDA_ROLE} --policy-name lambda_rds_poli
 lambda_role_arn=$(aws iam get-role --role-name ${LAMBDA_ROLE} | jq -r .Role.Arn)
 echo ${lambda_role_arn}
 
+sleep 5
+
 aws lambda create-function --function-name ${LAMBDA_NAME} --zip-file fileb:///tmp/aurora_gdb_update.zip --handler aurora_gdb_update.lambda_handler --runtime python3.9 --role ${lambda_role_arn} --layers ${layer_arn} --timeout 600 
 
 lambda_arn=$(aws lambda get-function --function-name ${LAMBDA_NAME} | jq -r .Configuration.FunctionArn)

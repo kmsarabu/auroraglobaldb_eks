@@ -263,13 +263,13 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  SubnetRouteTableAssociation:
+  SubnetRouteTableAAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
       SubnetId: !Ref SubnetBPublic
       RouteTableId: !Ref RouteTable
 
-  SubnetRouteTableAssociation:
+  SubnetRouteTableBAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
       SubnetId: !Ref SubnetAPublic
