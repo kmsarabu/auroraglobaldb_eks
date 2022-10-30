@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: octank
+  name: retailapp
   labels:
-    app: octank
+    app: retailapp
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -14,8 +14,8 @@ provisioner: efs.csi.aws.com
 apiVersion: v1
 kind: Secret
 metadata:
-  name: octank-secret
-  namespace: octank
+  name: retailapp-secret
+  namespace: retailapp
 type: Opaque
 data:
   database_password: ZWtzZ2RiZGVtbw==
@@ -35,9 +35,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kart-deployment
-  namespace: octank
+  namespace: retailapp
   labels:
-    app: octank
+    app: retailapp
     service: kart
 spec:
   replicas: 2
@@ -47,18 +47,18 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: octank
+      app: retailapp
       service: kart
   template:
     metadata:
       labels:
-        app: octank
+        app: retailapp
         service: kart
     spec:
       restartPolicy: Always
       containers:
       - name: kart
-        image: ksarabu/kart:1.0
+        image: %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/retailapp/kart:1.0
         resources:
           requests:
             cpu: "250m"
@@ -69,51 +69,51 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_port
           - name: DATABASE_USER
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_user
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_password
           - name: DATABASE_DB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_db_name
           - name: DATABASE_RODB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: secret_key
           - name: AUTHTOKEN
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: authtoken
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: product-deployment
-  namespace: octank
+  namespace: retailapp
   labels:
-    app: octank
+    app: retailapp
     service: product
 spec:
   replicas: 2
@@ -123,18 +123,18 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: octank
+      app: retailapp
       service: product
   template:
     metadata:
       labels:
-        app: octank
+        app: retailapp
         service: product
     spec:
       restartPolicy: Always
       containers:
       - name: product
-        image: ksarabu/product:1.0
+        image: %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/retailapp/product:1.0
         resources:
           requests:
             cpu: "250m"
@@ -145,51 +145,51 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_port
           - name: DATABASE_USER
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_user
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_password
           - name: DATABASE_DB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_db_name
           - name: DATABASE_RODB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: secret_key
           - name: AUTHTOKEN
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: authtoken
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-deployment
-  namespace: octank
+  namespace: retailapp
   labels:
-    app: octank
+    app: retailapp
     service: user
 spec:
   replicas: 2
@@ -199,18 +199,18 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: octank
+      app: retailapp
       service: user
   template:
     metadata:
       labels:
-        app: octank
+        app: retailapp
         service: user
     spec:
       restartPolicy: Always
       containers:
       - name: user
-        image: ksarabu/user:1.0
+        image: %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/retailapp/user:1.0
         resources:
           requests:
             cpu: "250m"
@@ -221,68 +221,68 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_port
           - name: DATABASE_USER
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_user
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_password
           - name: DATABASE_DB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_db_name
           - name: DATABASE_RODB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: secret_key
           - name: AUTHTOKEN
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: authtoken
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: webapp
-  namespace: octank
+  namespace: retailapp
   labels:
-    app: octank
+    app: retailapp
     service: webapp
 spec:
   replicas: 2
   serviceName: webapp
   selector:
     matchLabels:
-      app: octank
+      app: retailapp
       service: webapp
   template:
     metadata:
       labels:
-        app: octank
+        app: retailapp
         service: webapp
     spec:
       containers:
       - name: webapp
-        image: ksarabu/webapp:1.0
+        image: %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/retailapp/webapp:1.0
         resources:
           requests:
             cpu: "250m"
@@ -296,62 +296,62 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_port
           - name: DATABASE_USER
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_user
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_password
           - name: DATABASE_DB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_db_name
           - name: DATABASE_RODB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: secret_key
           - name: AUTHTOKEN
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: authtoken
           - name: PRODUCTS_SERVICE
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: product_service
           - name: KART_SERVICE
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: kart_service
           - name: USER_SERVICE
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: user_service
           - name: ORDER_SERVICE
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: order_service
       restartPolicy: Always
   volumeClaimTemplates:
@@ -368,9 +368,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-deployment
-  namespace: octank
+  namespace: retailapp
   labels:
-    app: octank
+    app: retailapp
     service: order
 spec:
   replicas: 2
@@ -380,18 +380,18 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: octank
+      app: retailapp
       service: order
   template:
     metadata:
       labels:
-        app: octank
+        app: retailapp
         service: order
     spec:
       restartPolicy: Always
       containers:
       - name: order
-        image: ksarabu/order:1.0
+        image: %AWS_ACCOUNT_ID%.dkr.ecr.%AWS_REGION%.amazonaws.com/retailapp/order:1.0
         resources:
           requests:
             cpu: "250m"
@@ -402,56 +402,56 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_host
           - name: DATABASE_PORT
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_port
           - name: DATABASE_USER
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_user
           - name: DATABASE_PASSWORD
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_password
           - name: DATABASE_DB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_db_name
           - name: DATABASE_RODB_NAME
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: database_rodb_name
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: secret_key
           - name: AUTHTOKEN
             valueFrom:
               secretKeyRef:
-                 name: octank-secret
+                 name: retailapp-secret
                  key: authtoken
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: kart
-  namespace: octank
+  namespace: retailapp
   labels:
     app: oktank
     service: kart
 spec:
   type: ClusterIP
   selector:
-    app: octank
+    app: retailapp
     service: kart
   ports:
     - name: kart
@@ -463,14 +463,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: product
-  namespace: octank
+  namespace: retailapp
   labels:
     app: oktank
     service: product
 spec:
   type: ClusterIP
   selector:
-    app: octank
+    app: retailapp
     service: product
   ports:
     - name: product
@@ -482,14 +482,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user
-  namespace: octank
+  namespace: retailapp
   labels:
     app: oktank
     service: user
 spec:
   type: ClusterIP
   selector:
-    app: octank
+    app: retailapp
     service: user
   ports:
     - name: user
@@ -501,14 +501,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order
-  namespace: octank
+  namespace: retailapp
   labels:
     app: oktank
     service: order
 spec:
   type: ClusterIP
   selector:
-    app: octank
+    app: retailapp
     service: order
   ports:
     - name: order
@@ -520,7 +520,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: webappnp
-  namespace: octank
+  namespace: retailapp
   labels:
     app: oktank
     service: webappnp
@@ -537,7 +537,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: webapp
-  namespace: octank
+  namespace: retailapp
   labels:
     app: oktank
     service: webapp

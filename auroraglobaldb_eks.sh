@@ -321,6 +321,12 @@ function update_routes()
    print_line
 }
 
+function install_retailapp()
+{
+    sed -i -e "s/%AWS_ACCOUNT_ID%/$AWS_ACCOUNT_ID/g" -e "s/%AWS_REGION%/$AWS_REGION/g"  ${RETAILAPP_K8S}
+    kubectl apply -f ${RETAILAPP_K8S}
+
+}
 
 function install_pgbouncer()
 {
@@ -398,7 +404,7 @@ function install_pgbouncer()
     pgbouncerini=`cat  ${PGB_CONF}`
     userlisttxt=`cat  ${PGB_USERLIST} | base64 --wrap=0`
 
-    sed -e "/%pgbouncerini%/r /tmp/pgbouncer.ini" -e "/%pgbouncerini%/d" -e "s/%userlisttxt%/$userlisttxt/g" ${PGB_K8S} > ${PGB_APP}
+    sed -e "/%pgbouncerini%/r /tmp/pgbouncer.ini" -e "/%pgbouncerini%/d" -e "s/%userlisttxt%/$userlisttxt/g" -e "s/%AWS_ACCOUNT_ID%/$AWS_ACCOUNT_ID/g" -e "s/%AWS_REGION%/$AWS_REGION/g"  ${PGB_K8S} > ${PGB_APP}
 
     kubectl apply -f ${PGB_APP}
 
@@ -608,6 +614,7 @@ function set_env()
          export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
     fi
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text) 
+    export RETAILAPP_K8S=retailapp/eks/octank_app-${AWS_REGION}.yml
     print_line
 }
 
@@ -657,6 +664,7 @@ if [ "X${1}" == "Xconfigure-pgb" ] ; then
     print_line
     set_env
     set_env_from_c9_cfn
+    install_pgbouncer
     configure_pgb_lambda
     exit
 fi
@@ -680,5 +688,5 @@ install_loadbalancer
 install_cluster_auto_scaler
 install_metric_server
 
-install_pgbouncer
-configure_pgb_lambda
+#install_pgbouncer
+#configure_pgb_lambda

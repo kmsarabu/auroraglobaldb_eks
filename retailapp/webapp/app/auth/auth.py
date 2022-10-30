@@ -1,4 +1,4 @@
-from flask import Blueprint, Flask, session, jsonify, render_template, request, redirect, url_for
+from flask import Blueprint, Flask , jsonify, render_template, session, request, redirect, url_for
 from app.models import User
 from .forms import RegistrationForm, LoginForm
 
@@ -6,26 +6,19 @@ auth_bp = Blueprint("auth_bp", __name__, template_folder="templates/auth")
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def main():
-	print ("In login/auth")
-	print (session)
 	if request.method == "POST":
 		form = LoginForm()
 		user= User()
 		email = request.form['email']
 		password = request.form['password']
 		result = user.verify(email, password)
-		print ("User Verified , result {}".format(result))
 		if result == True:
 			session['email'] = email
-			print ("In login/auth")
-			print (session)
 			return redirect(url_for("general_bp.home"))
 	return render_template("login.html", title="Login")
 
 @auth_bp.route("/register", methods=["GET","POST"])
 def signup():
-	print ("In login/auth")
-	print (session)
 	if request.method == "POST":
 		form = LoginForm()
 		user= User()
@@ -44,7 +37,6 @@ def forgot_pass():
 
 @auth_bp.route("/logout")
 def logout():
-    print ("In LOGOUT, Clearing session")
     session.pop('user', None)
     session.pop('email', None)
     session.clear()

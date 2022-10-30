@@ -1,2 +1,0 @@
-# PgBouncerDocker
-PgBouncer Docker

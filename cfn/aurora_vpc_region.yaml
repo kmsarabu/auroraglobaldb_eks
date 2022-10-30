@@ -900,6 +900,14 @@ Resources:
       EncryptionConfiguration:
          EncryptionType: AES256
 
+  ECRRepoPgBouncer:
+    Description: "ECR Repository for PgBouncer"
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "retailapp/pgbouncer"
+      EncryptionConfiguration:
+         EncryptionType: AES256
+
 Outputs:
   TemplateID:
     Description: 'Template ID'

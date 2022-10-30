@@ -98,8 +98,8 @@ class Product:
     def return_items(self):
         return self.products_service._get(self.product_name)
 
-    def popular_items(self, top=5, interval=180):
-        return self.products_service._get('popularitems?top={}&interval={}'.format(top, interval))
+    def popular_items(self, top=5):
+        return self.products_service._get('popularitems?top={}'.format(top))
 
     def show_all_items(self):
         return self.products_service._get('view')
@@ -146,7 +146,7 @@ class Kart:
     def get(self, key):
         print (key)
         key = "{}:{}".format(self.email, key)
-        response = self.kart_service._get('get?key={}'.format(key))          
+        response = self.kart_service._get('get?key={}'.format(key))
         return response.json().get('value')
 
     def set(self, key, value):

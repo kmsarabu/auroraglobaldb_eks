@@ -9,29 +9,19 @@ from app.visits.visits import visits_bp
 from flask_cors import CORS
 import logging, sys, json_logging, flask, os
 from flask_session import Session
-from sqlalchemy import create_engine
-
-dblocation = '/appdata/session.db'
-
-if not os.path.exists(dblocation):
-    print ("Creating DBEngine for sqllite KRISHNA KRISHNA KRISHNA")
-    engine = create_engine('sqlite:///{}'.format(dblocation), echo = True)
-
-print ("SQLite DB Engine created")
+import memcache
 
 app = Flask(__name__)
+sess = Session()
 json_logging.init_flask(enable_json=True)
 json_logging.init_request_instrument(app)
 cors = CORS(app)
-app.secret_key = os.environ.get('SECRET_KEY', "eksAuroraGlobalDb")
+app.secret_key = os.environ.get('SECRET_KEY', "hhdhdhdhdh7788768")
 
-app.config['SESSION_TYPE'] = 'sqlalchemy'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{}'.format(dblocation)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
-sess = Session(app)
-sess.app.session_interface.db.create_all()
+app.config['SESSION_TYPE'] = 'filesystem'
+sess.init_app(app)
 
 @app.before_request
 def run():

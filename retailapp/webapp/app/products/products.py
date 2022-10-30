@@ -11,6 +11,7 @@ def main(product):
 	response = product.return_items()
 	if response.status_code != 200:
 		abort(401)
+	print (response)
 	product_items = response.json().get('product_items')
 	page = int(request.args.get("page") or 1)
 	if len(product_items) <= 8:
@@ -22,7 +23,9 @@ def main(product):
 	if product_items is None:
 		abort(404)
 	else:
+		print (product_items)
 		product_items= [dict(p) for p in product_items]
+		print (product_items)
 		return render_template("list.html", 
 		 products= product_items[start:end],
 		 title=product_name , 

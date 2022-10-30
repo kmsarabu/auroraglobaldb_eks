@@ -18,12 +18,12 @@ def home():
 def apiproduct():
 	r = None
 	whereami = None
-	content = {"id": "octank"}
+	content = {"Lab": "DAT312 Workshop"}
 	whereami = models.Product().whereami()
 	if whereami:
 		whereami = whereami.json()
 		content["Aurora"] = {"reader": whereami and whereami[0] and whereami[0].get("reader") and whereami[0].get("reader")[0] or None,
-			     "writer": whereami and whereami[0] and whereami[0].get("reader") and whereami[0].get("writer")[0] or None}
+			     "writer": whereami and whereami[0] and whereami[0].get("writer") and whereami[0].get("writer")[0] or None}
 	try:
 		r = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document', timeout=5)
 		if r.status_code == 200:
