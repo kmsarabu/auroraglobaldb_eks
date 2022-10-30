@@ -323,8 +323,8 @@ function update_routes()
 
 function install_retailapp()
 {
-    sed -i -e "s/%AWS_ACCOUNT_ID%/$AWS_ACCOUNT_ID/g" -e "s/%AWS_REGION%/$AWS_REGION/g"  ${RETAILAPP_K8S}
-    kubectl apply -f ${RETAILAPP_K8S}
+    sed -e "s/%AWS_ACCOUNT_ID%/$AWS_ACCOUNT_ID/g" -e "s/%AWS_REGION%/$AWS_REGION/g"  ${RETAILAPP_K8S} > ${RETAILAPP_K8S_REGION}
+    kubectl apply -f ${RETAILAPP_K8S_REGION}
 
 }
 
@@ -614,7 +614,8 @@ function set_env()
          export AWS_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region')
     fi
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text) 
-    export RETAILAPP_K8S=retailapp/eks/octank_app-${AWS_REGION}.yml
+    export RETAILAPP_K8S=retailapp/eks/retailapp.yml
+    export RETAILAPP_K8S_REGION=retailapp/eks/retailapp-${AWS_REGION}.yml
     print_line
 }
 
