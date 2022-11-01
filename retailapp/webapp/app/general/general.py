@@ -18,7 +18,7 @@ def home():
 def apiproduct():
 	r = None
 	whereami = None
-	content = {"Lab": "DAT312 Workshop"}
+	content = {"Lab": "Aurora Global Database & EKS Workshop"}
 	whereami = models.Product().whereami()
 	if whereami:
 		whereami = whereami.json()

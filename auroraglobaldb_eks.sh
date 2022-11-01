@@ -569,6 +569,7 @@ function create_global_accelerator()
     lname=$(aws elbv2 describe-load-balancers --region $REGION1 --query 'LoadBalancers[?contains(DNSName, `webapp`)].LoadBalancerArn' --output text)
     EndpointGroupArn_1=$(aws globalaccelerator create-endpoint-group \
       --region ${REGION2} \
+      --traffic-dial-percentage 100 \
       --listener-arn $Global_Accelerator_Listerner_Arn \
       --endpoint-group-region ${REGION1} \
       --query "EndpointGroup.EndpointGroupArn" \
@@ -578,9 +579,9 @@ function create_global_accelerator()
     lname=$(aws elbv2 describe-load-balancers --region $REGION2 --query 'LoadBalancers[?contains(DNSName, `webapp`)].LoadBalancerArn' --output text)
     EndpointGroupArn_2=$(aws globalaccelerator create-endpoint-group \
       --region ${REGION2} \
-      --traffic-dial-percentage 0 \
+      --traffic-dial-percentage 100 \
       --listener-arn $Global_Accelerator_Listerner_Arn \
-      --endpoint-group-region $REGION2 \
+      --endpoint-group-region ${REGION2} \
       --query "EndpointGroup.EndpointGroupArn" \
       --output text \
       --endpoint-configurations EndpointId=$lname,Weight=128,ClientIPPreservationEnabled=True) 
@@ -590,8 +591,16 @@ function create_global_accelerator()
       --query "Accelerator.DnsName" \
       --output text --region ${REGION2})
 
-    echo $WEBAPP_GADNS
+    echo "Global Accelerator DNS Name: $WEBAPP_GADNS"
 
+    echo "Checking deployment status"
+    status=$(aws globalaccelerator list-accelerators --query 'Accelerators[?(Name == `eksgdb`)].Status' --output text)
+    while [[ "${status}" != "DEPLOYED" ]]; do
+       echo "Global Accelerator deployment status ${status}"
+       sleep 60
+       status=$(aws globalaccelerator list-accelerators --query 'Accelerators[?(Name == `eksgdb`)].Status' --output text)
+    done
+    echo "Global Accelerator deployment completed. DNS Name: $WEBAPP_GADNS"
 
 }
 
@@ -659,7 +668,7 @@ if [ "X${1}" == "Xglobal-accelerator" ] ; then
     exit
 fi
 
-if [ "X${1}" == "Xconfigure-pgb" ] ; then
+if [ "X${1}" == "Xconfigure-retailapp" ] ; then
     print_line
     echo "Configuration Lambda function for pgbouncer"
     print_line
@@ -667,6 +676,8 @@ if [ "X${1}" == "Xconfigure-pgb" ] ; then
     set_env_from_c9_cfn
     install_pgbouncer
     configure_pgb_lambda
+    echo "Configuration of RetailApp"
+    install_retailapp
     exit
 fi
 
@@ -689,5 +700,3 @@ install_loadbalancer
 install_cluster_auto_scaler
 install_metric_server
 
-#install_pgbouncer
-#configure_pgb_lambda

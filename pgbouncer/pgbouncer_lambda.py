@@ -16,7 +16,7 @@ global CLUSTER_NAME
 KUBE_FILEPATH = '/tmp/kubeconfig'
 AURORA_GDB_NAME = ''
 REGION = os.environ['AWS_REGION']
-K8S_NAMESPACE='octank'
+K8S_NAMESPACE='retailapp'
 K8S_CONFIGMAP='pgbconfig'
 K8S_DEPLOYMENT='pgbouncer-deployment'
 

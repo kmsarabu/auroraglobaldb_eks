@@ -152,7 +152,7 @@ class Product:
         with connect("writer") as dbconn:
             writer = self.fetch_data(dbconn, sqlstmt, "writer")
         with connect("reader") as dbconn:
-            reader = self.fetch_data(dbconn, sqlstmt, "writer")
+            reader = self.fetch_data(dbconn, sqlstmt, "reader")
         return [{"writer": writer, "reader": reader}]
 
     def addProduct(self, category, product):
